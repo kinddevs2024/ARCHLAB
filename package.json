@@ -1,10 +1,10 @@
 {
-  "name": "shablon",
+  "name": "ARCHLAB",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "A": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
