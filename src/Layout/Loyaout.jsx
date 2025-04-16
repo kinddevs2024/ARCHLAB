@@ -2,7 +2,7 @@ import React from "react";
 import {} from "react-router-dom";
 import Header from "./Header";
 import "react-custom-cursors/dist/index.css";
-import Bar from "./bar";
+import Bar from "./Bar";
 
 const Loyaout = ({ children }) => {
   return (
