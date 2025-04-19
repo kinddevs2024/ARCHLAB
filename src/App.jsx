@@ -4,7 +4,6 @@ import { Analytics } from "@vercel/analytics/react";
 import './App.css'
 import Loyaout from './Layout/Loyaout'
 import Home from './pages/Home/Home'
-import { useState,  } from "react";
 import Eror from './pages/Eror-404/Eror'
 
 
@@ -13,8 +12,8 @@ function App() {
   return (
     <>
       <Loyaout>
-        <Routes>
           <Analytics />
+        <Routes>
           <Route path="/" element={<Home />} />
           <Route path="*" element={<Eror />} />
         </Routes>
