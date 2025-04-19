@@ -1,5 +1,6 @@
 import { } from 'react'
 import { Route, Routes, } from 'react-router-dom'
+import { Analytics } from "@vercel/analytics/react";  
 import './App.css'
 import Loyaout from './Layout/Loyaout'
 import Home from './pages/Home/Home'
@@ -12,13 +13,14 @@ function App() {
   return (
     <>
       <Loyaout>
-        <Routes >
-          <Route path='/' element={<Home />} />
-          <Route path='*' element={<Eror />} />
+        <Routes>
+          <Analytics />
+          <Route path="/" element={<Home />} />
+          <Route path="*" element={<Eror />} />
         </Routes>
       </Loyaout>
     </>
-  )
+  );
 }
 
 export default App;
