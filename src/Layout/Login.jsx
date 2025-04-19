@@ -1,37 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import logo from "/public/logo.svg";
 import building from "/public/building.png";
-import Loginbg from "/public/Loginbg.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError("Email and Password are required!");
-      return;
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    if (isLoggedIn === "true") {
+      myGreeting();
     }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Please enter a valid email address!");
-      return;
-    }
-    setError("");
-    console.log("Email:", email);
-    console.log("Password:", password);
+  }, []);
 
-    // Call myGreeti function if validation passes
-    myGreeti();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:3005/api/users", {
+        email,
+        password,
+      });
+
+      if (response.status === 200 && response.data.user) {
+        const rememberMe = document.getElementById("remember").checked;
+        if (rememberMe) {
+          localStorage.setItem("isLoggedIn", "true");
+        }
+        myGreeting();
+      } else {
+        setError("Failed to verify email and password.");
+      }
+    } catch (error) {
+      if (error.response && error.response.data.message) {
+        setError(error.response.data.message);
+      } else {
+        setError("An error occurred during login.");
+      }
+    }
   };
 
-  const myGreeti = () => {
+  const myGreeting = () => {
     const element = document.getElementById("id");
     if (element) {
       element.classList.add("hidden");
-    } else {
-      console.error("Element with id 'id' not found.");
     }
   };
 
