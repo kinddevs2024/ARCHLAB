@@ -24,10 +24,13 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:3005/api/users", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        "https://bekend-red.vercel.app/api/users",
+        {
+          email,
+          password,
+        }
+      );
 
       if (response.status === 200 && response.data.user) {
         const rememberMe = document.getElementById("remember").checked;
