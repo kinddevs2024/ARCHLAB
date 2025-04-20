@@ -7,7 +7,8 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
+  const [rememberMe, setRememberMe] = useState(true); // Track remember me checkbox state
+  // 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("isLoggedIn");
     if (isLoggedIn === "true") {
@@ -25,7 +26,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://bekend-red.vercel.app/api/users",
+        "https://bekend-red.vercel.app/api/users", // Ensure this URL is correct
         {
           email,
           password,
@@ -33,7 +34,6 @@ const Login = () => {
       );
 
       if (response.status === 200 && response.data.user) {
-        const rememberMe = document.getElementById("remember").checked;
         if (rememberMe) {
           localStorage.setItem("isLoggedIn", "true");
         }
@@ -118,7 +118,8 @@ const Login = () => {
                   type="checkbox"
                   id="remember"
                   className="w-4 h-4 text-blue-600"
-                  defaultChecked
+                  checked={rememberMe} // Bind state to checkbox
+                  onChange={(e) => setRememberMe(e.target.checked)} // Update state on change
                 />
                 <label htmlFor="remember" className="text-sm">
                   Eslab qolish
