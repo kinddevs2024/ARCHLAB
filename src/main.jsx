@@ -7,7 +7,7 @@ import Login from "./Layout/Login.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <Login />
+    {/* <Login /> */}
     <App />
   </BrowserRouter>
 );

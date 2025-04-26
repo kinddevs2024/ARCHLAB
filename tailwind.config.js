@@ -19,8 +19,11 @@ export default withMT({
     extend: {
       colors: {
         border: "#C6A47E",
+        borderlog: "#C6A47E",
         barbg: "#282D32",
         btnhover: "#FAF8F21A",
+        Tayyorlandi: "bg-green-500",
+        Jarayonda: "bg-orange-400",
         textcolor: "#24243E",
       },
     },
