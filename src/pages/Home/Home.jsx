@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import getYearsFrom2024ToNow from "./year.js";
-import downloadFile from "./homeelements/Dowlord.js";
+import { Button } from "@material-tailwind/react";
+import { GoChevronLeft, GoChevronRight } from "react-icons/go";
+import { GoFileDirectory } from "react-icons/go";
 
 const statusColors = {
   Tayyorlandi: "bg-green-500",
@@ -12,6 +14,7 @@ export function Home() {
   const [projects, setProjects] = useState([]);
   const [year, setYear] = useState(2021);
   const [isDownloading, setIsDownloading] = useState(false);
+  const statuscolor = document.getElementById("statusicon");
 
   const downloadFile = async (fileUrl, fileName) => {
     try {
@@ -39,14 +42,14 @@ export function Home() {
 
   const fetchProjects = async (selectedYear) => {
     try {
-      // Example: Replace this with your real API call
+      // Example: Replace this wip your real API call
       // const response = await axios.get(`/api/projects?year=${selectedYear}`);
       // setProjects(response.data);
 
       // Temporary MOCK data
       const response = [
         {
-          status: "Jarayonda",
+          status: "1",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -55,25 +58,22 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "Jarayonda",
+          status: "2",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
           date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "Jarayonda",
+          status: "3",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
           date: "2021-11-03",
-        },
-        {
-          status: "Jarayonda",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
       ];
       setProjects(response);
@@ -81,129 +81,166 @@ export function Home() {
       console.error("Error fetching projects:", error);
     }
   };
+
+  useEffect(() => {
+    const currentYears = getYearsFrom2024ToNow();
+    setYear(currentYears[currentYears.length - 1]); // Set default to the last year
+  }, []);
+  const decrementYears = () => {
+    const currentYears = getYearsFrom2024ToNow();
+    const currentIndex = currentYears.indexOf(year);
+    if (currentIndex > 0) {
+      setYear(currentYears[currentIndex - 1]); // Move to the previous year
+    } else if (currentIndex === 0) {
+      setYear(currentYears[currentYears.length - 1]); // If at index 0, move to the last year
+    }
+  };
+
+  const incrementYears = () => {
+    const currentYears = getYearsFrom2024ToNow();
+    const currentIndex = currentYears.indexOf(year);
+    if (currentIndex < currentYears.length - 1) {
+      setYear(currentYears[currentIndex + 1]); // Move to the next year
+    } else if (currentIndex === currentYears.length - 1) {
+      setYear(currentYears[0]); // If at the last index, move to the first year
+    }
+  };
+
+  const statusceker = (status) => {
+    if (status === "1") {
+      return { label: "Tayyorlandi", color: "bg-[#4CAE4C]" };
+    } else if (status === "2") {
+      return { label: "Jarayonda", color: "bg-[#F0AD4E]" };
+    }  else  {
+      return { label: "Boshqa", color: "bg-blue-500" };
+    }
+    return { label: "Noma'lum", color: "bg-gray-500" }; // Default case
+  };
+
+  const hoverColorEffect = () => {
+    return { color: "bg-red-500" };
+  };
   return (
     <>
       <div className="flex flex-col bg-[#f6f8fd] justify-start items-start h-screen w-full bg-bg">
-        <div className=" text-black">
-          <div className="flex items-center  justify-between mb-6 mt-6">
-            <h1 className="text-3xl font-bold">Loyihalar</h1>
+        <div className="flex w-full items-center justify-between mb-6 mt-6">
+          <h1 className="text-3xl font-bold">Loyihalar</h1>
 
-            <div className="flex justify-center items-center space-x-2 ">
-              {getYearsFrom2024ToNow().map((yr) => (
-                <button
-                  key={yr}
-                  onClick={() => setYear(yr)}
-                  className={`px-4 py-2 rounded-full ${
-                    year === yr ? "bg-white text-black" : "bg-gray-700"
-                  }`}
-                >
-                  {yr}
-                </button>
-              ))}
+          <div className="flex justify-center bg-white p-2 pr-3 pl-3 rounded-xl h-[49px] items-center space-x-2">
+            <Button
+              onClick={decrementYears}
+              className="px-[0px] py-[0px] w-[32px] h-[32px] text-black shadow-none bg-[#F1F1F1] duration-300 rounded-xl"
+            >
+              <GoChevronLeft className="w-[32px] h-[32px]" />
+            </Button>
+            <div className="flex items-center space-x-2">
+              <div className="flex overflow-x-auto gap-3 scrollbar-thin scrollbar-thumb-black scrollbar-track-gray-200">
+                {getYearsFrom2024ToNow().map((yr) => (
+                  <Button
+                    key={yr}
+                    onClick={() => setYear(yr)}
+                    className={`px-4 z- font-bold py-2 w-[64px] h-[33px] duration-300 shadow-none rounded-xl ${
+                      year === yr
+                        ? "bg-borderlog text-white"
+                        : "bg-[#F1F1F1] text-black"
+                    }`}
+                  >
+                    {yr}
+                  </Button>
+                ))}
+              </div>
             </div>
-
-            <button className="bg-orange-300 hover:bg-orange-400 text-black font-semibold py-2 px-4 rounded-lg">
-              Yangi loyiha
-            </button>
+            <Button
+              onClick={incrementYears}
+              className="px-[0px] py-[0px] w-[32px] h-[32px] text-black shadow-none bg-[#F1F1F1] duration-300 rounded-xl"
+            >
+              <GoChevronRight className="w-[32px] h-[32px]" />
+            </Button>
           </div>
 
-          <div className="">
-            <table className="min-w-full bg-white rounded-lg overflow-hidden">
-              <thead className="bg-gray-100 text-gray-700 text-left text-sm">
-                <tr>
-                  <th className="py-3 px-4">Kompaniya nomi</th>
-                  <th className="py-3 px-4">Obyekt nomi</th>
-                  <th className="py-3 px-4">Obyekt joyi</th>
-                  <th className="py-3 px-4">Sana</th>
-                  <th className="py-3 px-4">Yuklash</th>
-                </tr>
-              </thead>
-              <tbody>
-                {projects.length > 0 ? (
-                  projects.map((project, index) => (
-                    <tr
-                      key={index}
-                      className={`border-b ${
-                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      }`}
-                    >
-                      <td className="py-3 px-4 flex items-center space-x-2">
-                        <span
-                          className={`text-black text-xs font-semibold py-1 px-3 rounded-full ${
-                            statusColors[project.status]
-                          }`}
-                        >
-                          {project.status}
-                        </span>
-                        <span className="flex items-center space-x-2">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+          <button className="px-4 bg-borderlog text-white font-bold py-2 h-[49px] duration-300 shadow-none rounded-xl">
+            Yangi loyiha
+          </button>
+        </div>
+
+        <div className="w-full flex justify-center items-center">
+          <div className="w-full rounded-lg overflow-hidden">
+            <div className="text-[#3A3A49] text-left text-sm">
+              <div className="flex items-center justify-between space-x-2">
+                <p className="py-3 px-44">Kompaniya nomi</p>
+                <p className="py-3 px-4">Obyekt nomi</p>
+                <p className="py-3 px-4">Obyekt joyi</p>
+                <div className="flex items-center justify-evenly space-x-2">
+                  <div className="flex items-center pr-12 justify-center">
+                    <p className="py-3 px-1 ">Sana</p>
+                    <div className="space-y-[2px]">
+                      <div className="w-0 h-0 border-b-[5px] border-[#C6A47E] rounded-2xl border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent"></div>
+                      <div className="w-0 h-0 border-t-[5px] border-[#ADC0F8] rounded-2xl border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent"></div>
+                    </div>
+                  </div>
+                  <p className="py-3 px-4">Yuklash</p>
+                </div>
+              </div>
+            </div>
+            <div className="text-gray-600 text-sm">
+              {projects.length > 0 ? (
+                projects.map((project, index) => (
+                  <div
+                    key={index}
+                    className="flex space-x-11 justify-center rounded-lg group hover:bg-borderlog text-borderlog hover:text-white"
+                  >
+                    <div className="py-3 px-4">
+                      <div className="flex items-center justify-start space-x-2 gap-3">
+                        <div className="flex items-center justify-start w-32">
+                          <Button
+                            id="statusicon"
+                            className={`${
+                              statusceker(project.status).color
+                            } text-white px-4 py-2 rounded-[12px]  `}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M3 7v10c0 1.1.9 2 2 2h14a2 2 0 002-2V7H3z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"
-                            />
-                          </svg>
-                          <span className="text-gray-800">
-                            {project.company}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-gray-800">
-                        {project.object}
-                      </td>
-                      <td className="py-3 px-4 text-gray-800">
-                        {project.address}
-                      </td>
-                      <td className="py-3 px-4 text-gray-800">
-                        {project.date}
-                      </td>
-                      <td className="py-3 px-4">
+                            {statusceker(project.status).label}
+                          </Button>
+                        </div>
+                        <div className="flex items-center space-x-2 gap-3">
+                          <GoFileDirectory className="w-8 h-8" />
+                          {project.company}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="py-3 px-[0px]">{project.object}</p>
+                    <p className="py-3 px-[0px]">{project.address}</p>
+                    <p className="py-3 px-[0px]">{project.date}</p>
+                    <p className="py-3 px-[0px]">
+                      {project.fileUrl ? (
                         <button
                           onClick={() =>
                             downloadFile(
                               project.fileUrl,
-                              `${project.company}.zip`
+                              `${project.object}.zip`
                             )
                           }
-                          className="bg-orange-300 hover:bg-orange-400 text-black font-semibold py-1 px-4 rounded"
-                          disabled={isDownloading}
+                          className="bg-borderlog text-white px-4 py-2 rounded-md group-hover:bg-white group-hover:text-black"
                         >
-                          {isDownloading ? "Yuklanmoqda..." : "Yuklash"}
-                        </button> 
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      className="py-6 px-4 text-center text-gray-500"
-                      colSpan="5"
-                    >
-                      Loyihalar topilmadi
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                          Yuklash
+                        </button>
+                      ) : (
+                        "No File"
+                      )}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="flex items-center justify-center">
+                  <p colSpan="5" className="text-center py-4">
+                    No projects found.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-      <Analytics />
     </>
   );
 }
-
 export default Home;

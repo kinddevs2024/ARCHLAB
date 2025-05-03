@@ -21,6 +21,7 @@ function App() {
         <Analytics />
         <Routes>
           <Route path="/loihalar" element={<Home />} />
+          <Route path="/yakka-tartibdagi-loihalar" element={<Error />} />
           <Route path="*" element={<Error />} />
         </Routes>
       </Layout>

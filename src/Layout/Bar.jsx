@@ -1,10 +1,10 @@
 import React from "react";
 import logo from "/public/logo.svg";
 import pages from "/public/pages1.svg";
-import { button, Button } from "@material-tailwind/react";
+import { Button } from "@material-tailwind/react";
+import { Link } from "react-router-dom";
 
 const Bar = () => {
-
   const handleLogout = () => {
     const confirmLogout = window.confirm("Do you seriously want to log out?");
     if (confirmLogout) {
@@ -28,25 +28,25 @@ const Bar = () => {
       <div className="flex flex-col gap-3 items-start justify-start w-full h-full mt-3">
         {/* Loyihalar */}
 
-
-
-
-
-        <Button
-          style={{ textTransform: "none" }}
-          className="text-lg  items-center   w-[259px] h-[50px]   shadow-none flex justify-start gap-3 font-thin  text-start bg-barbg hover:bg-btnhover  text-white  cursor-pointer"
-        >
-          <img src={pages} alt="pages" />
-          Loyihalar
-        </Button>
+        <Link path="/loihalar">
+          <Button
+            style={{ textTransform: "none" }}
+            className="text-lg  items-center   w-[259px] h-[50px]   shadow-none flex justify-start gap-3 font-thin  text-start bg-barbg hover:bg-btnhover  text-white  cursor-pointer"
+          >
+            <img src={pages} alt="pages" />
+            Loyihalar
+          </Button>
+        </Link>
         {/* Yakka tartibdagi loyihalar */}
-
-
-
-
-
-
-
+        <Link path="/yakka-tartibdagi-loihalar">
+          <Button
+            style={{ textTransform: "none" }}
+            className="text-lg  items-center   w-[259px] h-[50px]   shadow-none flex justify-start gap-3 font-thin  text-start bg-barbg hover:bg-btnhover  text-white  cursor-pointer"
+          >
+            <img src={pages} alt="pages" />
+            Yakka tartibdagi loyihalar
+          </Button>
+        </Link>
         <Button
           style={{ textTransform: "none" }}
           className="text-lg  shadow-none flex justify-start gap-3 font-thin w-full text-start  bg-barbg hover:bg-btnhover  text-white  cursor-pointer"
