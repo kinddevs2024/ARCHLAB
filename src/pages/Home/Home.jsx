@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import getYearsFrom2024ToNow from "./year.js";
-import { Button } from "@material-tailwind/react";
+import { Button, Dialog } from "@material-tailwind/react";
 import { GoChevronLeft, GoChevronRight } from "react-icons/go";
 import { GoFileDirectory } from "react-icons/go";
+import { Addproject } from "./homeelements/Addproject.jsx";
 
 const statusColors = {
   Tayyorlandi: "bg-green-500",
@@ -58,6 +59,123 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
           status: "2",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
@@ -68,6 +186,24 @@ export function Home() {
         },
         {
           status: "3",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
+          company: "Sevimli kanal binosi",
+          object: "Sevimli kanal binosining interyer dizayni",
+          address: "I.Karimov k. 106-uy",
+          date: "2021-11-03",
+          fileUrl:
+            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
+        },
+        {
+          status: "1",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -111,10 +247,9 @@ export function Home() {
       return { label: "Tayyorlandi", color: "bg-[#4CAE4C]" };
     } else if (status === "2") {
       return { label: "Jarayonda", color: "bg-[#F0AD4E]" };
-    }  else  {
+    } else {
       return { label: "Boshqa", color: "bg-blue-500" };
     }
-    return { label: "Noma'lum", color: "bg-gray-500" }; // Default case
   };
 
   const hoverColorEffect = () => {
@@ -122,9 +257,9 @@ export function Home() {
   };
   return (
     <>
-      <div className="flex flex-col bg-[#f6f8fd] justify-start items-start h-screen w-full bg-bg">
+      <div className="flex flex-col bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
         <div className="flex w-full items-center justify-between mb-6 mt-6">
-          <h1 className="text-3xl font-bold">Loyihalar</h1>
+          <h1 className="text-3xl font-bold ml-2">Loyihalar</h1>
 
           <div className="flex justify-center bg-white p-2 pr-3 pl-3 rounded-xl h-[49px] items-center space-x-2">
             <Button
@@ -134,7 +269,7 @@ export function Home() {
               <GoChevronLeft className="w-[32px] h-[32px]" />
             </Button>
             <div className="flex items-center space-x-2">
-              <div className="flex overflow-x-auto gap-3 scrollbar-thin scrollbar-thumb-black scrollbar-track-gray-200">
+              <div className="flex gap-3 ">
                 {getYearsFrom2024ToNow().map((yr) => (
                   <Button
                     key={yr}
@@ -158,9 +293,7 @@ export function Home() {
             </Button>
           </div>
 
-          <button className="px-4 bg-borderlog text-white font-bold py-2 h-[49px] duration-300 shadow-none rounded-xl">
-            Yangi loyiha
-          </button>
+          <Addproject />
         </div>
 
         <div className="w-full flex justify-center items-center">
@@ -182,60 +315,62 @@ export function Home() {
                 </div>
               </div>
             </div>
-            <div className="text-gray-600 text-sm">
-              {projects.length > 0 ? (
-                projects.map((project, index) => (
-                  <div
-                    key={index}
-                    className="flex space-x-11 justify-center rounded-lg group hover:bg-borderlog text-borderlog hover:text-white"
-                  >
-                    <div className="py-3 px-4">
-                      <div className="flex items-center justify-start space-x-2 gap-3">
-                        <div className="flex items-center justify-start w-32">
-                          <Button
-                            id="statusicon"
-                            className={`${
-                              statusceker(project.status).color
-                            } text-white px-4 py-2 rounded-[12px]  `}
-                          >
-                            {statusceker(project.status).label}
-                          </Button>
-                        </div>
-                        <div className="flex items-center space-x-2 gap-3">
-                          <GoFileDirectory className="w-8 h-8" />
-                          {project.company}
+            <div>
+              <div className="  overflow-x-auto gap-3 text-sm">
+                {projects.length > 0 ? (
+                  projects.map((project, index) => (
+                    <div
+                      key={index}
+                      className="flex space-x-11 justify-evenly items-center rounded-lg group hover:bg-borderlog text-borderlog hover:text-white"
+                    >
+                      <div className="py-3 px-4">
+                        <div className="flex items-center justify-start space-x-2 gap-3">
+                          <div className="flex items-center justify-start w-32">
+                            <Button
+                              id="statusicon"
+                              className={`${
+                                statusceker(project.status).color
+                              } text-white px-4 py-2 rounded-[12px]  `}
+                            >
+                              {statusceker(project.status).label}
+                            </Button>
+                          </div>
+                          <div className="flex items-center space-x-2 gap-3">
+                            <GoFileDirectory className="w-8 h-8" />
+                            {project.company}
+                          </div>
                         </div>
                       </div>
+                      <p className="py-3 px-[0px]">{project.object}</p>
+                      <p className="py-3 px-[0px]">{project.address}</p>
+                      <p className="py-3 px-[0px]">{project.date}</p>
+                      <p className="py-3 px-[0px]">
+                        {project.fileUrl ? (
+                          <button
+                            onClick={() =>
+                              downloadFile(
+                                project.fileUrl,
+                                `${project.object}.zip`
+                              )
+                            }
+                            className="bg-borderlog text-white px-4 py-2 rounded-md group-hover:bg-white group-hover:text-black"
+                          >
+                            Yuklash
+                          </button>
+                        ) : (
+                          "No File"
+                        )}
+                      </p>
                     </div>
-                    <p className="py-3 px-[0px]">{project.object}</p>
-                    <p className="py-3 px-[0px]">{project.address}</p>
-                    <p className="py-3 px-[0px]">{project.date}</p>
-                    <p className="py-3 px-[0px]">
-                      {project.fileUrl ? (
-                        <button
-                          onClick={() =>
-                            downloadFile(
-                              project.fileUrl,
-                              `${project.object}.zip`
-                            )
-                          }
-                          className="bg-borderlog text-white px-4 py-2 rounded-md group-hover:bg-white group-hover:text-black"
-                        >
-                          Yuklash
-                        </button>
-                      ) : (
-                        "No File"
-                      )}
+                  ))
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <p colSpan="5" className="text-center py-4">
+                      No projects found.
                     </p>
                   </div>
-                ))
-              ) : (
-                <div className="flex items-center justify-center">
-                  <p colSpan="5" className="text-center py-4">
-                    No projects found.
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>

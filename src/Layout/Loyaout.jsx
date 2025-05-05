@@ -8,10 +8,16 @@ const Loyaout = ({ children }) => {
   return (
     <>
       <div className="flex flex-row justify-between items-center h-screen w-screen ">
+        <div className=" fixed top-0 left-0 z-10 w-1/4 h-screen">
         <Bar />
-        <div className="container flex justify-between w-full h-full flex-col mx-auto px-4 py-4">
+        </div>
+            <div className="flex bg-barbg flex-col justify-start items-center h-screen 2xl:w-[280px] w-1/4 m-[20px] shadow-lg"></div>
+
+        <div className="flex flex-col  w-full h-screen ">
           <Header />
-          {children}
+          <div className="container flex justify-between w-full h-full p-0 flex-col mx-auto ">
+            {children}
+          </div>
         </div>
       </div>
     </>

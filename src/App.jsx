@@ -20,8 +20,19 @@ function App() {
       <Layout>
         <Analytics />
         <Routes>
-          <Route path="/loihalar" element={<Home />} />
-          <Route path="/yakka-tartibdagi-loihalar" element={<Error />} />
+          <Route path="/Loihalar" element={<Home />} />
+          <Route path="/Yakka%20tartibdagi%20loyihalar" element={<Home />} />
+          <Route path="/Interyer" element={<Error />} />
+          <Route path="/Tex-obs" element={<Error />} />
+          <Route path="/Laboratoriya" element={<Error />} />
+          <Route path="/Tashqi%20nazorat" element={<Error />} />
+          <Route path="/Rendr" element={<Error />} />
+          <Route path="/Shartnomalar" element={<Error />} />
+          <Route path="/Xatlar" element={<Error />} />
+          <Route path="/Buyruqlar" element={<Error />} />
+          <Route path="/Foydalanuvchilar" element={<Error />} />
+          <Route path="/Chat" element={<Error />} />
+          <Route path="/Sozlamalar" element={<Home />} />
           <Route path="*" element={<Error />} />
         </Routes>
       </Layout>

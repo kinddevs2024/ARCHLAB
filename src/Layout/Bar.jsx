@@ -1,8 +1,22 @@
 import React from "react";
 import logo from "/public/logo.svg";
 import pages from "/public/pages1.svg";
-import { Button } from "@material-tailwind/react";
+import { Button, Button as MaterialButton } from "@material-tailwind/react";
 import { Link } from "react-router-dom";
+import {
+  FaProjectDiagram,
+  FaDoorOpen,
+  FaUserFriends,
+  FaComments,
+  FaCog,
+  FaFileAlt,
+  FaEnvelope,
+  FaClipboardList,
+  FaFlask,
+  FaSearch,
+  FaLayerGroup,
+} from "react-icons/fa";
+
 
 const Bar = () => {
   const handleLogout = () => {
@@ -15,64 +29,70 @@ const Bar = () => {
     }
   };
 
+  const [activeButton, setActiveButton] = React.useState(null);
+
+  const handleButtonClick = (label) => {
+    setActiveButton(label);
+  };
+
   return (
-    <div className="flex bg-barbg flex-col justify-start items-center h-screen  2xl:w-[280px] w-1/4  p-[10px] shadow-lg">
+    <div className="flex bg-barbg flex-col justify-start items-center h-screen 2xl:w-[280px] w-1/4 p-[10px] shadow-lg">
       <div className="flex gap-4 items-center mb-4 justify-start w-full ml-8 mt-3">
         <img
           src={logo}
           alt="Logo"
-          className="w-14 h-14 border-[2px] border-border rounded-2xl p-[3px]"
+          className="w-[48px] h-[48px] border-[1px] border-border rounded-2xl p-[5px]"
         />
-        <h1 className="text-2xl text-white font-semibold">ARCH LAB</h1>
+        <h1 className="text-[25px] text-white font-semibold">ARCH LAB</h1>
       </div>
-      <div className="flex flex-col gap-3 items-start justify-start w-full h-full mt-3">
-        {/* Loyihalar */}
-
-        <Link path="/loihalar">
-          <Button
-            style={{ textTransform: "none" }}
-            className="text-lg  items-center   w-[259px] h-[50px]   shadow-none flex justify-start gap-3 font-thin  text-start bg-barbg hover:bg-btnhover  text-white  cursor-pointer"
-          >
-            <img src={pages} alt="pages" />
-            Loyihalar
+      <div className="gap-1 text-white w-64 flex flex-col justify-between items-start h-full">
+        {[
+          { icon: <FaProjectDiagram />, label: "Loihalar" },
+          { icon: <FaLayerGroup />, label: "Yakka tartibdagi loyihalar" },
+          { icon: <FaLayerGroup />, label: "Interyer" },
+          { icon: <FaFileAlt />, label: "Tex-obs" },
+          { icon: <FaFlask />, label: "Laboratoriya" },
+          { icon: <FaSearch />, label: "Tashqi nazorat" },
+          { icon: <FaFileAlt />, label: "Rendr" },
+          { icon: <FaClipboardList />, label: "Shartnomalar" },
+          { icon: <FaEnvelope />, label: "Xatlar" },
+          { icon: <FaClipboardList />, label: "Buyruqlar" },
+          { icon: <FaUserFriends />, label: "Foydalanuvchilar" },
+          { icon: <FaComments />, label: "Chat" },
+          { icon: <FaCog />, label: "Sozlamalar" },
+        ].map((button, index) => (
+          <Link to={`/${button.label}`} className=" w-full" key={index}>
+            <Button
+              className={`p-2 w-full shadow-none ${
+                button.label === activeButton
+                  ? "bg-[#FAF8F21A] text-borderlog"
+                  : "bg-[#282D32] hover:bg-[#343A40] "
+              }`}
+              onClick={() => handleButtonClick(button.label)}
+            >
+              <CustomButton icon={button.icon} label={button.label} />
+            </Button>
+          </Link>
+        ))}
+        <div className="mt-auto w-full">
+          <Button className="bg-[#FFFFFF14] w-full p-2 hover:bg-[#ff2424]">
+            <CustomButton
+              icon={<FaDoorOpen />}
+              label="Выход"
+              onClick={handleLogout}
+              className="text-lg shadow-none flex justify-start gap-3 font-thin w-full text-start bg-red-600 hover:bg-red-700 text-white cursor-pointer mt-4"
+            />
           </Button>
-        </Link>
-        {/* Yakka tartibdagi loyihalar */}
-        <Link path="/yakka-tartibdagi-loihalar">
-          <Button
-            style={{ textTransform: "none" }}
-            className="text-lg  items-center   w-[259px] h-[50px]   shadow-none flex justify-start gap-3 font-thin  text-start bg-barbg hover:bg-btnhover  text-white  cursor-pointer"
-          >
-            <img src={pages} alt="pages" />
-            Yakka tartibdagi loyihalar
-          </Button>
-        </Link>
-        <Button
-          style={{ textTransform: "none" }}
-          className="text-lg  shadow-none flex justify-start gap-3 font-thin w-full text-start  bg-barbg hover:bg-btnhover  text-white  cursor-pointer"
-        >
-          <img className="w-[24px] h-[28px]" src={pages} alt="pages" />
-          Yakka tartibdagi loyihalar
-        </Button>
-        {/* Interyer */}
-        <Button
-          style={{ textTransform: "none" }}
-          className="text-lg  shadow-none flex justify-start gap-3 font-thin w-full text-start  bg-barbg hover:bg-btnhover  text-white  cursor-pointer"
-        >
-          <img src={pages} alt="pages" />
-          Interyer
-        </Button>
-        {/* Logout Button */}
-        <Button
-          style={{ textTransform: "none" }}
-          className="text-lg shadow-none flex justify-start gap-3 font-thin w-full text-start bg-red-600 hover:bg-red-700 text-white cursor-pointer mt-4"
-          onClick={handleLogout}
-        >
-          Log Out
-        </Button>
+        </div>
       </div>
     </div>
   );
 };
 
+const CustomButton = ({ icon, label }) => (
+  <div className="flex items-center space-x-2 px-2 py-2 rounded  cursor-pointer">
+    <span className="text-lg">{icon}</span>
+    <span>{label}</span>
+  </div>
+);
 export default Bar;

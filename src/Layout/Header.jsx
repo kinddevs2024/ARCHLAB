@@ -1,13 +1,46 @@
 import React from 'react';
-import logo from "/public/logo.svg"; 
+import { FaBars, FaSearch } from "react-icons/fa";
+import { IoNotificationsOutline } from "react-icons/io5";
 
 const Header = () => {
+  
   return (
-    <header>
-      <div className=' flex items-center justify-between p-4  w-full h-full text-white'>
-        <img src={logo} alt="Logo" className="w-12 h-12" />
+    <div className="flex items-center justify-between px-5   py-3    border-b bg-white">
+      {/* Left side: Menu icon */}
+      <FaBars className="text-2xl cursor-pointer" />
+
+      {/* Center: Search box */}
+      <div className="flex items-center border rounded-full px-4 py-1 w-[300px]">
+        <input
+          type="text"
+          placeholder="Qidirish"
+          className="outline-none w-full text-gray-600"
+        />
+        <FaSearch className="text-gray-700" />
       </div>
-    </header>
+
+      {/* Right side: Notification and user */}
+      <div className="flex items-center gap-4">
+        {/* Notification bell */}
+        <div className="relative">
+          <IoNotificationsOutline className="text-2xl" />
+          <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+        </div>
+
+        {/* User info */}
+        <div className="flex items-center space-x-3">
+          <div className="text-right">
+            <div className="font-semibold">Kamoliddin Sulaymanov</div>
+            <div className="text-sm text-gray-500">Asosiy arxitektor</div>
+          </div>
+          <img
+            src="https://i.pravatar.cc/40" // Replace with real avatar
+            alt="avatar"
+            className="w-10 h-10 rounded-full"
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 
