@@ -21,16 +21,13 @@ export function Addproject() {
 
   return (
     <>
-      <Button onClick={handleOpen} variant="gradient">
-        Add Product
+      <Button onClick={handleOpen} className=" bg-border">
+        Yangi loyiha
       </Button>
       <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
         <DialogHeader className="relative m-0 block">
           <Typography variant="h4" color="blue-gray">
-            Manage Item
-          </Typography>
-          <Typography className="mt-1 font-normal text-gray-600">
-            Keep your records up-to-date and organized.
+            Loyiha yaratish{" "}
           </Typography>
           <IconButton
             size="sm"
@@ -48,12 +45,11 @@ export function Addproject() {
               color="blue-gray"
               className="mb-2 text-left font-medium"
             >
-              Name
+              Mijoz ismi
             </Typography>
             <Input
               color="gray"
               size="lg"
-              placeholder="eg. White Shoes"
               name="name"
               className="placeholder:opacity-100 focus:!border-t-gray-900"
               containerProps={{
@@ -64,13 +60,58 @@ export function Addproject() {
               }}
             />
           </div>
+          {/* qoshimcha isim */}
           <div>
             <Typography
               variant="small"
               color="blue-gray"
               className="mb-2 text-left font-medium"
             >
-              Category
+              Yordamchi ismi
+            </Typography>
+            <Input
+              color="gray"
+              size="lg"
+              name="name"
+              className="placeholder:opacity-100 focus:!border-t-gray-900"
+              containerProps={{
+                className: "!min-w-full",
+              }}
+              labelProps={{
+                className: "hidden",
+              }}
+            />
+          </div>
+          {/* usta ismi  */}
+          <div>
+            <Typography
+              variant="small"
+              color="blue-gray"
+              className="mb-2 text-left font-medium"
+            >
+              Ustaning ismi{" "}
+            </Typography>
+            <Input
+              color="gray"
+              size="lg"
+              name="name"
+              className="placeholder:opacity-100 focus:!border-t-gray-900"
+              containerProps={{
+                className: "!min-w-full",
+              }}
+              labelProps={{
+                className: "hidden",
+              }}
+            />
+          </div>
+          {/* Loyiha vibor  */}
+          <div>
+            <Typography
+              variant="small"
+              color="blue-gray"
+              className="mb-2 text-left font-medium"
+            >
+              Loyiha
             </Typography>
             <Select
               className="!w-full !border-[1.5px] !border-blue-gray-200/90 !border-t-blue-gray-200/90 bg-white text-gray-800 ring-4 ring-transparent placeholder:text-gray-600 focus:!border-primary focus:!border-t-blue-gray-900 group-hover:!border-primary"
@@ -84,63 +125,18 @@ export function Addproject() {
               <Option>Watches</Option>
             </Select>
           </div>
-          <div className="flex gap-4">
-            <div className="w-full">
-              <Typography
-                variant="small"
-                color="blue-gray"
-                className="mb-2 text-left font-medium"
-              >
-                Weight
-              </Typography>
-              <Input
-                color="gray"
-                size="lg"
-                placeholder="eg. <8.8oz | 250g"
-                name="weight"
-                className="placeholder:opacity-100 focus:!border-t-gray-900"
-                containerProps={{
-                  className: "!min-w-full",
-                }}
-                labelProps={{
-                  className: "hidden",
-                }}
-              />
-            </div>
-            <div className="w-full">
-              <Typography
-                variant="small"
-                color="blue-gray"
-                className="mb-2 text-left font-medium"
-              >
-                Size
-              </Typography>
-              <Input
-                color="gray"
-                size="lg"
-                placeholder="eg. US 8"
-                name="size"
-                className="placeholder:opacity-100 focus:!border-t-gray-900"
-                containerProps={{
-                  className: "!min-w-full",
-                }}
-                labelProps={{
-                  className: "hidden",
-                }}
-              />
-            </div>
-          </div>
+          {/* Loyiha haqida  */}
           <div>
             <Typography
               variant="small"
               color="blue-gray"
               className="mb-2 text-left font-medium"
             >
-              Description (Optional)
+              Proyekt haqida
             </Typography>
             <Textarea
               rows={7}
-              placeholder="eg. This is a white shoes with a comfortable sole."
+              placeholder="Kontentingizni shu yerda chop eting...."
               className="!w-full !border-[1.5px] !border-blue-gray-200/90 !border-t-blue-gray-200/90 bg-white text-gray-600 ring-4 ring-transparent focus:!border-primary focus:!border-t-blue-gray-900 group-hover:!border-primary"
               labelProps={{
                 className: "hidden",
@@ -149,7 +145,7 @@ export function Addproject() {
           </div>
         </DialogBody>
         <DialogFooter>
-          <Button className="ml-auto" onClick={handleOpen}>
+          <Button className="ml-auto bg-borderlog" onClick={handleOpen}>
             Add Product
           </Button>
         </DialogFooter>
