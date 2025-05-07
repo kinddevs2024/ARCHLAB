@@ -59,7 +59,7 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "1",
+          status: "2",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -77,7 +77,7 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "1",
+          status: "3",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -95,7 +95,7 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "1",
+          status: "2",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -113,7 +113,7 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "1",
+          status: "3",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -131,7 +131,7 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "1",
+          status: "2",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -140,7 +140,7 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "1",
+          status: "3",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -149,7 +149,7 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "1",
+          status: "2",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -158,7 +158,7 @@ export function Home() {
             "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
         },
         {
-          status: "1",
+          status: "2",
           company: "Sevimli kanal binosi",
           object: "Sevimli kanal binosining interyer dizayni",
           address: "I.Karimov k. 106-uy",
@@ -252,14 +252,11 @@ export function Home() {
     }
   };
 
-  const hoverColorEffect = () => {
-    return { color: "bg-red-500" };
-  };
   return (
     <>
       <div className="flex flex-col bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
         <div className="flex w-full items-center justify-between mb-6 mt-6">
-          <h1 className="text-3xl font-bold ml-2">Loyihalar</h1>
+          <h1 className="text-3xl font-bold ml-4">Loyihalar</h1>
 
           <div className="flex justify-center bg-white p-2 pr-3 pl-3 rounded-xl h-[49px] items-center space-x-2">
             <Button
@@ -321,7 +318,7 @@ export function Home() {
                   projects.map((project, index) => (
                     <div
                       key={index}
-                      className="flex space-x-11 justify-evenly items-center rounded-lg group hover:bg-borderlog text-borderlog hover:text-white"
+                      className="flex space-x-11 justify-evenly items-center rounded-lg group hover:bg-borderlog text-[#333333] hover:text-white"
                     >
                       <div className="py-3 px-4">
                         <div className="flex items-center justify-start space-x-2 gap-3">
@@ -335,7 +332,7 @@ export function Home() {
                               {statusceker(project.status).label}
                             </Button>
                           </div>
-                          <div className="flex items-center space-x-2 gap-3">
+                          <div className="flex  items-center space-x-2 gap-3">
                             <GoFileDirectory className="w-8 h-8" />
                             {project.company}
                           </div>
