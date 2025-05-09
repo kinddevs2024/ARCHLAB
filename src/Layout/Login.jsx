@@ -16,70 +16,106 @@ const Login = () => {
     if (element) {
       element.classList.add("hidden");
     }
-  };  
-
-  if (localStorage.getItem("mail") && localStorage.getItem("password")) {
-    console.log("mmmmm");
-
-    myGreeting(); 
-  } else {
-
-
+  };
   
-
-    useEffect(() => {
+  useEffect(() => {
+    if (localStorage.getItem("mail") && localStorage.getItem("password")) {
+      console.log("mmmmm");
+      myGreeting();
+    } else {
       const isLoggedIn = localStorage.getItem("isLoggedIn");
       if (isLoggedIn === "true") {
         myGreeting();
       }
-    }, []);
+    }
+  }, []);
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-
-      if (!email || !password) {
-        setError("Email and password are required");
-        return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    let response;
+    try {
+      response = await axios.post(
+        "http://localhost:3005/api/login", // Ensure this URL is correct
+        {
+          email,
+          password,
+        }
+      );
+      console.log(response.data); // Debugging log
+    } catch (error) {
+      if (error.response && error.response.data.message) {
+        setError(error.response.data.message);
       } else {
+        setError("An error occurred during login.");
+      }
+      return; // Exit the function if an error occurs
+    }
+
+    const { status, user } = response.data; // Ensure response contains these fields
+    if (response.status === 200 && user) {
+      const { name, surname, phone, address, username } = user; // Destructure user details
+      if (rememberMe) {
         myGreeting();
         localStorage.setItem("mail", email);
         localStorage.setItem("password", password);
+        localStorage.setItem("status", status);
+        localStorage.setItem("name", name);
+        localStorage.setItem("surname", surname);
+        localStorage.setItem("phone", phone);
+        localStorage.setItem("address", address);
+        localStorage.setItem("username", username);
       }
+      myGreeting();
+    } else {
+      setError("Failed to verify email and password.");
+    }
 
-      try {
-        const response = await axios.post(
-          "http://localhost:8888/", // Ensure this URL is correct
-          {
-            email,
-            password,
-          }
-        );
-        console.log(response.data); // Debugging log
-
-        if (response.status === 200 && response.data.user) {
-          if (rememberMe) {
-            localStorage.setItem("isLoggedIn", "true");
-          }
-          myGreeting();
-        } else {
-          setError("Failed to verify email and password.");
-        }
-      } catch (error) {
-        if (error.response && error.response.data.message) {
-          setError(error.response.data.message);
-        } else {
-          setError("An error occurred during login.");
-        }
+    if ( response.status === 200 && response.data.user) {
+      if (rememberMe) {
+        myGreeting();
+        localStorage.setItem("mail", email);
+        localStorage.setItem("password", password);
+        localStorage.setItem("status", status);
+        localStorage.setItem("name", name);
+        localStorage.setItem("surname", surname); 
+        localStorage.setItem("phone", phone);
+        localStorage.setItem("address", address);
+        localStorage.setItem("username", username);
       }
-    };
-    
-  } 
+      myGreeting();
+    } else {
+      setError("Failed to verify email and password.");
+    }
 
+    // if (!email || !password) {
+    //   setError("Email and password are required");
+    //   return;
+    // } else {
+    //   myGreeting();
+    //   localStorage.setItem("mail", email);
+    //   localStorage.setItem("password", password);
+    //   localStorage.setItem("status", status);
+    //   localStorage.setItem("name", name);
+    //   localStorage.setItem("surname", surname);
+    //   localStorage.setItem("phone", phone);
+    //   localStorage.setItem("address", address);
+    //   localStorage.setItem("username", username);
+    //   console.log(localStorage.getItem("mail"));
+    //   console.log(localStorage.getItem("password"));
+    //   console.log(localStorage.getItem("status"));
+    //   console.log(localStorage.getItem("name"));
+    //   console.log(localStorage.getItem("surname"));
+    //   console.log(localStorage.getItem("phone"));
+    //   console.log(localStorage.getItem("address"));
+    //   console.log(localStorage.getItem("username"));
+    // }
+
+  };
 
   return (
     <div
       id="id"
-      className="flex justify-center items-center w-screen h-screen bg-white fixed top-0 left-0 z-50"
+      className="flex justify-center  w-screen h-screen bg-white fixed top-0 left-0 z-50"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 w-full bg-[url(/public/Loginbg.png)] bg-no-repeat bg-bottom object-bottom max-w-6xl shadow-lg rounded-2xl overflow-hidden bg-white">
         <div className="p-10 flex flex-col justify-center">
@@ -92,7 +128,10 @@ const Login = () => {
           <div className="flex flex-col items-center justify-center h-full">
             <h2 className="text-xl font-semibold mb-6">Xush kelibsiz</h2>
 
-            <form className="space-y-4 gap-[29px]" onSubmit={(e) => handleSubmit(e)}>
+            <form
+              className="space-y-4 gap-[29px]"
+              onSubmit={(e) => handleSubmit(e)}
+            >
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex items-center border border-gray-300 rounded-[10px]  ">
                 <div
@@ -129,6 +168,7 @@ const Login = () => {
                   className="w-[90%] border-none focus:outline-none focus:ring-0"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autocomplete="current-password"
                 />
               </div>
 
@@ -166,5 +206,6 @@ const Login = () => {
     </div>
   );
 };
+// Ensure to replace the URL with your actual backend URL
 
 export default Login;

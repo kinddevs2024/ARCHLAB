@@ -7,6 +7,7 @@ import Layout from "./Layout/Loyaout";
 import Home from "./pages/Home/Home";
 import Error from "./pages/Eror-404/Eror";
 import Hatlar from "./pages/Hatlar/Hatlar";
+import Foydalanuvchilar from "./pages/Foydalanuvchilar/Foydalanuvchilar";
 
 function App() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ function App() {
           <Route path="/Shartnomalar" element={<Error />} />
           <Route path="/Xatlar" element={<Hatlar />} />
           <Route path="/Buyruqlar" element={<Error />} />
-          <Route path="/Foydalanuvchilar" element={<Error />} />
+          <Route path="/Foydalanuvchilar" element={<Foydalanuvchilar />} />
           <Route path="/Chat" element={<Error />} />
           <Route path="/Sozlamalar" element={<Home />} />
           <Route path="*" element={<Error />} />

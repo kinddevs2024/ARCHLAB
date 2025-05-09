@@ -1,6 +1,5 @@
 import React from "react";
 import logo from "/public/logo.svg";
-import pages from "/public/pages1.svg";
 import { Button, Button as MaterialButton } from "@material-tailwind/react";
 import { Link } from "react-router-dom";
 import {
@@ -16,17 +15,14 @@ import {
   FaSearch,
   FaLayerGroup,
 } from "react-icons/fa";
-
+import Siginout from "./elements/Siginout";
 
 const Bar = () => {
   const handleLogout = () => {
-    const confirmLogout = window.confirm("Do you seriously want to log out?");
-    if (confirmLogout) {
-      // Clear localStorage
-      localStorage.clear();
-      // Refresh the window
-      window.location.reload();
-    }
+    // Clear localStorage
+    localStorage.clear();
+    // Refresh the window
+    window.location.reload();
   };
 
   const [activeButton, setActiveButton] = React.useState(null);
@@ -58,7 +54,6 @@ const Bar = () => {
           { icon: <FaEnvelope />, label: "Xatlar" },
           { icon: <FaClipboardList />, label: "Buyruqlar" },
           { icon: <FaUserFriends />, label: "Foydalanuvchilar" },
-          { icon: <FaComments />, label: "Chat" },
           { icon: <FaCog />, label: "Sozlamalar" },
         ].map((button, index) => (
           <Link to={`/${button.label}`} className=" w-full" key={index}>
@@ -75,14 +70,7 @@ const Bar = () => {
           </Link>
         ))}
         <div className="mt-auto w-full">
-          <Button className="bg-[#FFFFFF14] w-full p-2 hover:bg-[#ff2424]">
-            <CustomButton
-              icon={<FaDoorOpen />}
-              label="Выход"
-              onClick={handleLogout}
-              className="text-lg shadow-none flex justify-start gap-3 font-thin w-full text-start bg-red-600 hover:bg-red-700 text-white cursor-pointer mt-4"
-            />
-          </Button>
+          <Siginout />
         </div>
       </div>
     </div>

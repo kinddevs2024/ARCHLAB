@@ -1,22 +1,22 @@
-import React from 'react';
+import React from "react";
 import { FaBars, FaSearch } from "react-icons/fa";
 import { IoNotificationsOutline } from "react-icons/io5";
+import ThemeToggle from "./elements/ThemeToggle";
 
 const Header = () => {
-  
   return (
-    <div className="flex items-center justify-between px-5   py-3    border-b bg-white">
+    <div className="flex items-center justify-between px-5  ml-3  py-3    border-b bg-white">
       {/* Left side: Menu icon */}
-      <FaBars className="text-2xl cursor-pointer" />
+
 
       {/* Center: Search box */}
-      <div className="flex items-center border rounded-full px-4 py-1 w-[300px]">
+      <div className="flex items-center border rounded-[12px] px-4 py-1 w-[300px]">
         <input
           type="text"
           placeholder="Qidirish"
-          className="outline-none w-full text-gray-600"
+          className="outline-none w-[350px] h-[50px]  text-gray-600"
         />
-        <FaSearch className="text-gray-700" />
+        <FaSearch className="text-gray-700 w-6 h-6" />
       </div>
 
       {/* Right side: Notification and user */}

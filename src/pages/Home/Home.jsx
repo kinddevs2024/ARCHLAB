@@ -254,7 +254,7 @@ export function Home() {
 
   return (
     <>
-      <div className="flex flex-col bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
+      <div className="flex flex-col pr-1 pl-1 bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
         <div className="flex w-full items-center justify-between mb-6 mt-6">
           <h1 className="text-3xl font-bold ml-4">Loyihalar</h1>
 

@@ -1,22 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import getYearsFrom2024ToNow from "../Home/year";
-import { Button, Dialog } from "@material-tailwind/react";
+import { Button } from "@material-tailwind/react";
 import { GoChevronLeft, GoChevronRight } from "react-icons/go";
-import { GoFileDirectory } from "react-icons/go";
-import pdf from "../../../public/pdf.png";
-import doc from "../../../public/doc.png";
 
-const statusColors = {
-  Tayyorlandi: "bg-green-500",
-  Jarayonda: "bg-orange-400",
-};
 
 export function Hatlar() {
   const [projects, setProjects] = useState([]);
   const [year, setYear] = useState(2021);
   const [isDownloading, setIsDownloading] = useState(false);
-  const statuscolor = document.getElementById("statusicon");
+  const [isClicked, setIsClicked] = useState(false);
+  const [statuscolor, setStatuscolor] = useState(null);
+
+
+  useEffect(() => {
+    setStatuscolor(document.getElementById("statusicon"));
+  }, []);
 
   const downloadFile = async (fileUrl, fileName) => {
     try {
@@ -125,18 +124,15 @@ export function Hatlar() {
     }
   };
 
-  const statusceker = (status) => {
-    if (status === "1") {
-      return { label: "Tayyorlandi", color: "bg-[#4CAE4C]" };
-    } else if (status === "2") {
-      return { label: "Jarayonda", color: "bg-[#F0AD4E]" };
-    } else {
-      return { label: "Boshqa", color: "bg-blue-500" };
-    }
+  const [activeButton, setActiveButton] = React.useState(null);
+
+  const handleButtonClick = (label) => {
+    setActiveButton(label);
   };
 
   return (
     <>
+      <Analytics />
       <div className="flex flex-col bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
         <div className="flex w-full items-center justify-between mb-6 mt-6">
           <h1 className="text-3xl font-bold ml-4">Xatlar</h1>
@@ -178,6 +174,7 @@ export function Hatlar() {
             <div className="text-[#3A3A49] text-left text-sm">
               <div className="flex items-center justify-between mr-[15px] ml-[15px]">
                 <p className="py-3 p">№</p>
+                <p className="py-3 px-4 ">Nomi</p>
                 <div className="flex items-center pr-12 justify-center">
                   <p className="py-3 px-1 ">Sana</p>
                   <div className="space-y-[2px]">
@@ -185,7 +182,6 @@ export function Hatlar() {
                     <div className="w-0 h-0 border-t-[5px] border-[#ADC0F8] rounded-2xl border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent"></div>
                   </div>
                 </div>
-                <p className="py-3 px-4 ">Nomi</p>
                 <p className="py-3 px-4  ml-4">Buyurtmachi ismi</p>
                 <div className="flex items-center pr-[52px] justify-center gap-[58px]">
                   <p className="py-3 px-4 ">Tel raqam</p>
@@ -205,8 +201,8 @@ export function Hatlar() {
                       className="flex space-x-11 justify-between pr-[15px] pl-[15px] items-center rounded-lg group hover:bg-borderlog text-[#333333] hover:text-white"
                     >
                       <p className="py-3 px-[0px]">{index + 1}</p>
-                      <p className="py-3 px-[0px]">{project.date}</p>
                       <p className="py-3 px-[0px]">{project.name}</p>
+                      <p className="py-3 px-[0px]">{project.date}</p>
                       <p className="py-3 px-[0px]">{project.zakaznemer}</p>
                       <p className="py-3 px-[0px]">{project.tel}</p>
                       <p className="py-3 px-[0px]">{project.dogmany}.000</p>
@@ -220,10 +216,16 @@ export function Hatlar() {
                                   `${project.object}.zip`
                                 )
                               }
-                              className="bg-borderlog flex justify-center gap-2  text-white px-3 py-2 rounded-md group-hover:bg-white group-hover:text-black"
+                              className="bg-borderlog flex justify-center items-center gap-2  text-white px-3 py-2 rounded-md group-hover:bg-white group-hover:text-black"
                             >
                               Yuklash
-                              <img src={pdf} alt="" />
+                              <button
+                                className={`w-[32px] h-[16px] rounded-[12px] items-center text-[10px] font-extrabold text-center flex justify-center gap-2 bg-[#FFFFFF33] group-hover:bg-[#00000033] ${
+                                  isClicked ? "bg-[#00000033]" : "bg-[#FFFFFF33]"
+                                  }`}
+                              >
+                                <p>PDF</p>
+                              </button>
                             </button>
                           ) : (
                             "No File"
@@ -238,10 +240,12 @@ export function Hatlar() {
                                   `${project.object}.zip`
                                 )
                               }
-                              className="bg-borderlog flex justify-center gap-2 text-white px-3 py-2 rounded-md group-hover:bg-white group-hover:text-black"
+                              className="bg-borderlog flex items-center justify-center gap-2 text-white px-3 py-2 rounded-md group-hover:bg-white group-hover:text-black"
                             >
                               Yuklash
-                              <img src={doc} alt="" />
+                              <button className=" w-[32px] h-[16px] rounded-[12px]  items-center text-[10px] font-extrabold text-center flex justify-center gap-2 bg-[#FFFFFF33]  group-hover:bg-[#00000033]">
+                                <p>DOC</p>
+                              </button>
                             </button>
                           ) : (
                             "No File"
