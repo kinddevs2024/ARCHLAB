@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import FoydalanuvchiQoshish from "./CRUT/Foydalanuvchiqoshish";
+import Foydalanuvchiqoshish from "./CRUT/Foydalanuvchiqoshish";
 
 const Foydalanuvchilar = () => {
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ return (
   <div>
     <div className="flex w-full items-start m-5  flex-col text-start   justify-between mb-6 mt-6">
             <h1 className="text-3xl font-bold ml-4">Foydalanuvchilar</h1>
-            <FoydalanuvchiQoshish />
+            <Foydalanuvchiqoshish />
       <div className="flex flex-col w-full">
         <h1 className="text-2xl font-bold ml-4">Adminlar</h1>
 
@@ -39,7 +39,7 @@ return (
           .filter((user) => !["User", "Meneger"].includes(user.status))
           .map((user) => (
             <div
-              className="flex bg-blue-gray-100 max-w-[250px]  p-3  rounded-xl text-white items-center justify-evenly mb-6 mt-6"
+              className="flex gap-2  bg-blue-gray-100 max-w-[280px]  p-3  rounded-xl text-white items-center justify-evenly mb-6 mt-6"
               key={user.id}
             >
               <div className="flex items-center">
