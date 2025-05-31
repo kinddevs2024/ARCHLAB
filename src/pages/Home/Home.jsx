@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Analytics } from "@vercel/analytics/react";
+import axios from "axios";
 import getYearsFrom2024ToNow from "./year.js";
-import { Button, Dialog } from "@material-tailwind/react";
+import { Button } from "@material-tailwind/react";
 import { GoChevronLeft, GoChevronRight } from "react-icons/go";
-import { GoFileDirectory } from "react-icons/go";
 import { Addproject } from "./homeelements/Addproject.jsx";
+import Info from "./homeelements/Info.jsx";
 
 const statusColors = {
   Tayyorlandi: "bg-green-500",
@@ -15,21 +15,17 @@ export function Home() {
   const [projects, setProjects] = useState([]);
   const [year, setYear] = useState(2021);
   const [isDownloading, setIsDownloading] = useState(false);
-  const statuscolor = document.getElementById("statusicon");
 
   const downloadFile = async (fileUrl, fileName) => {
     try {
-      setIsDownloading(true); // старт загрузки
-
-      // Создание ссылки для скачивания
+      setIsDownloading(true);
       const link = document.createElement("a");
       link.href = fileUrl;
       link.download = fileName || "file";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      setTimeout(() => setIsDownloading(false), 1000); // небольшая задержка для красоты
+      setTimeout(() => setIsDownloading(false), 1000);
     } catch (error) {
       console.error("Ошибка при скачивании файла:", error);
       setIsDownloading(false);
@@ -37,182 +33,15 @@ export function Home() {
   };
 
   useEffect(() => {
-    // Simulating backend call
     fetchProjects(year);
   }, [year]);
 
   const fetchProjects = async (selectedYear) => {
     try {
-      // Example: Replace this wip your real API call
-      // const response = await axios.get(`/api/projects?year=${selectedYear}`);
-      // setProjects(response.data);
-
-      // Temporary MOCK data
-      const response = [
-        {
-          status: "1",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "2",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "1",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "3",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "1",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "2",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "1",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "3",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "1",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "2",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "3",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "2",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "2",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "1",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "2",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "3",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "1",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-        {
-          status: "1",
-          company: "Sevimli kanal binosi",
-          object: "Sevimli kanal binosining interyer dizayni",
-          address: "I.Karimov k. 106-uy",
-          date: "2021-11-03",
-          fileUrl:
-            "https://ficvoth030btryaa.public.blob.vercel-storage.com/New%20folder-OMoeW2SB1WOc1UMfjS8QK2LBAiLmk3.zip",
-        },
-      ];
-      setProjects(response);
+      const response = await axios.get(
+        `http://localhost:3005/api/projects?year=${selectedYear}`
+      );
+      setProjects(response.data);
     } catch (error) {
       console.error("Error fetching projects:", error);
     }
@@ -220,15 +49,16 @@ export function Home() {
 
   useEffect(() => {
     const currentYears = getYearsFrom2024ToNow();
-    setYear(currentYears[currentYears.length - 1]); // Set default to the last year
+    setYear(currentYears[currentYears.length - 1]);
   }, []);
+
   const decrementYears = () => {
     const currentYears = getYearsFrom2024ToNow();
     const currentIndex = currentYears.indexOf(year);
     if (currentIndex > 0) {
-      setYear(currentYears[currentIndex - 1]); // Move to the previous year
+      setYear(currentYears[currentIndex - 1]);
     } else if (currentIndex === 0) {
-      setYear(currentYears[currentYears.length - 1]); // If at index 0, move to the last year
+      setYear(currentYears[currentYears.length - 1]);
     }
   };
 
@@ -236,9 +66,9 @@ export function Home() {
     const currentYears = getYearsFrom2024ToNow();
     const currentIndex = currentYears.indexOf(year);
     if (currentIndex < currentYears.length - 1) {
-      setYear(currentYears[currentIndex + 1]); // Move to the next year
+      setYear(currentYears[currentIndex + 1]);
     } else if (currentIndex === currentYears.length - 1) {
-      setYear(currentYears[0]); // If at the last index, move to the first year
+      setYear(currentYears[0]);
     }
   };
 
@@ -257,7 +87,6 @@ export function Home() {
       <div className="flex flex-col pr-1 pl-1 bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
         <div className="flex w-full items-center justify-between mb-6 mt-6">
           <h1 className="text-3xl font-bold ml-4">Loyihalar</h1>
-
           <div className="flex justify-center bg-white p-2 pr-3 pl-3 rounded-xl h-[49px] items-center space-x-2">
             <Button
               onClick={decrementYears}
@@ -289,7 +118,6 @@ export function Home() {
               <GoChevronRight className="w-[32px] h-[32px]" />
             </Button>
           </div>
-
           <Addproject />
         </div>
 
@@ -320,9 +148,12 @@ export function Home() {
                       key={index}
                       className="flex space-x-11 justify-evenly items-center rounded-lg group hover:bg-borderlog text-[#333333] hover:text-white"
                     >
+                      {/* !info pro project */}
+
                       <div className="py-3 px-4">
                         <div className="flex items-center justify-start space-x-2 gap-3">
-                          <div className="flex items-center justify-start w-32">
+                          <Info reponse={project} />
+                          <div className="flex items-center justify-start w-[70px]">
                             <Button
                               id="statusicon"
                               className={`${
@@ -332,15 +163,19 @@ export function Home() {
                               {statusceker(project.status).label}
                             </Button>
                           </div>
-                          <div className="flex  items-center space-x-2 gap-3">
-                            <GoFileDirectory className="w-8 h-8" />
+                          <div className="flex  items-center  gap-3">
                             {project.company}
                           </div>
                         </div>
                       </div>
-                      <p className="py-3 px-[0px]">{project.object}</p>
-                      <p className="py-3 px-[0px]">{project.address}</p>
-                      <p className="py-3 px-[0px]">{project.date}</p>
+                      <p className="py-3 px-[0px]">{project.client}</p>
+                      <p className="py-3 px-[0px]">{project.assistant}</p>
+                      <p className="py-3 px-[0px]">{project.status}</p>
+                      <p className="py-3 px-[0px]">
+                        {project.date
+                          ? new Date(project.date).getFullYear()
+                          : ""}
+                      </p>
                       <p className="py-3 px-[0px]">
                         {project.fileUrl ? (
                           <button
