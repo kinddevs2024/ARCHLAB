@@ -5,6 +5,7 @@ import { Button } from "@material-tailwind/react";
 import { GoChevronLeft, GoChevronRight } from "react-icons/go";
 import { Addproject } from "./homeelements/Addproject.jsx";
 import Info from "./homeelements/Info.jsx";
+import AvatarUploadPage from "./homeelements/AvatarUploadPage.jsx";
 
 const statusColors = {
   Tayyorlandi: "bg-green-500",
@@ -87,6 +88,7 @@ export function Home() {
       <div className="flex flex-col pr-1 pl-1 bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
         <div className="flex w-full items-center justify-between mb-6 mt-6">
           <h1 className="text-3xl font-bold ml-4">Loyihalar</h1>
+          <AvatarUploadPage/>
           <div className="flex justify-center bg-white p-2 pr-3 pl-3 rounded-xl h-[49px] items-center space-x-2">
             <Button
               onClick={decrementYears}

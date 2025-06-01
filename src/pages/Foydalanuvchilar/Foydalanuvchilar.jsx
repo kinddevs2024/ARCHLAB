@@ -12,7 +12,7 @@ const Foydalanuvchilar = () => {
     const fetchUsers = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3005/api/users" // Ensure this URL is correct
+          "https://nodejs-serverless-function-express-ecru-delta.vercel.app/database/projects.json" // Ensure this URL is correct
         ); // Replace with your API endpoint
         setUsers(response.data);
       } catch (err) {
