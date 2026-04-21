@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import {} from "react-router-dom";
 import Header from "./Header";
 import "react-custom-cursors/dist/index.css";
 import Bar from "./Bar";
 import Eror from "/public/401Eror.svg";
 
-const Loyaout = ({ children }) => {
+const Layout = ({ children }) => {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   useEffect(() => {
@@ -37,7 +36,7 @@ const Loyaout = ({ children }) => {
 
   return (
     <>
-      <div className="flex flex-row justify-between items-center h-screen w-screen ">
+      <div className="flex h-screen w-screen flex-row items-center justify-between bg-[#f6f8fd]">
         <div className=" fixed top-0 left-0 z-10 2xl:w-1/4 w-[1000px] h-screen">
           <Bar />
         </div>
@@ -54,4 +53,4 @@ const Loyaout = ({ children }) => {
   );
 };
 
-export default Loyaout;
+export default Layout;

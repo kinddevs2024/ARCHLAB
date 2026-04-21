@@ -41,7 +41,7 @@ const AddUserModal = () => {
     setSuccess("");
     setLoading(true);
     try {
-      const response = await axios.post(
+      await axios.post(
         "http://localhost:3005/api/add",
         user,
         {
@@ -80,7 +80,7 @@ const AddUserModal = () => {
       <Button onClick={handleOpen} variant="gradient">
         Add User
       </Button>
-      <Dialog open={open} handler={handleOpen} size="md">
+      <Dialog open={open} handler={handleOpen} size="md" className="rounded-2xl">
         <DialogHeader>Add User</DialogHeader>
         <DialogBody>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -170,7 +170,7 @@ const AddUserModal = () => {
             {success && <Alert severity="success">{success}</Alert>}
           </form>
         </DialogBody>
-        <DialogFooter>
+        <DialogFooter className="border-t border-[#eef1f7] pt-4">
           <Button
             variant="text"
             color="red"
@@ -181,8 +181,7 @@ const AddUserModal = () => {
             <span>Cancel</span>
           </Button>
           <Button
-            variant="gradient"
-            color="green"
+            className="rounded-xl bg-borderlog"
             onClick={handleSubmit}
             disabled={loading}
           >

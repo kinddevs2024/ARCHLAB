@@ -8,13 +8,14 @@ import Home from "./pages/Home/Home";
 import Error from "./pages/Eror-404/Eror";
 import Hatlar from "./pages/Hatlar/Hatlar";
 import Foydalanuvchilar from "./pages/Foydalanuvchilar/Foydalanuvchilar";
+import Chat from "./pages/Chat/Chat";
 
 function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
     if (window.location.pathname === "/") {
-      navigate("/loihalar");
+      navigate("/Loihalar");
     }
   }, [navigate]);
   return (
@@ -33,7 +34,7 @@ function App() {
           <Route path="/Xatlar" element={<Hatlar />} />
           <Route path="/Buyruqlar" element={<Error />} />
           <Route path="/Foydalanuvchilar" element={<Foydalanuvchilar />} />
-          <Route path="/Chat" element={<Error />} />
+          <Route path="/Chat" element={<Chat />} />
           <Route path="/Sozlamalar" element={<Home />} />
           <Route path="*" element={<Error />} />
         </Routes>

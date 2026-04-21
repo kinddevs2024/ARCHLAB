@@ -20,7 +20,6 @@ const Login = () => {
   
   useEffect(() => {
     if (localStorage.getItem("mail") && localStorage.getItem("password")) {
-      console.log("mmmmm");
       myGreeting();
     } else {
       const isLoggedIn = localStorage.getItem("isLoggedIn");
@@ -51,9 +50,9 @@ const Login = () => {
       return; // Exit the function if an error occurs
     }
 
-    const { status, user } = response.data; // Ensure response contains these fields
+    const { status, user } = response.data;
     if (response.status === 200 && user) {
-      const { name, surname, phone, address, username } = user; // Destructure user details
+      const { name, surname, phone, address, username } = user;
       if (rememberMe) {
         myGreeting();
         localStorage.setItem("mail", email);
@@ -69,55 +68,14 @@ const Login = () => {
     } else {
       setError("Failed to verify email and password.");
     }
-
-    if ( response.status === 200 && response.data.user) {
-      if (rememberMe) {
-        myGreeting();
-        localStorage.setItem("mail", email);
-        localStorage.setItem("password", password);
-        localStorage.setItem("status", status);
-        localStorage.setItem("name", name);
-        localStorage.setItem("surname", surname); 
-        localStorage.setItem("phone", phone);
-        localStorage.setItem("address", address);
-        localStorage.setItem("username", username);
-      }
-      myGreeting();
-    } else {
-      setError("Failed to verify email and password.");
-    }
-
-    // if (!email || !password) {
-    //   setError("Email and password are required");
-    //   return;
-    // } else {
-    //   myGreeting();
-    //   localStorage.setItem("mail", email);
-    //   localStorage.setItem("password", password);
-    //   localStorage.setItem("status", status);
-    //   localStorage.setItem("name", name);
-    //   localStorage.setItem("surname", surname);
-    //   localStorage.setItem("phone", phone);
-    //   localStorage.setItem("address", address);
-    //   localStorage.setItem("username", username);
-    //   console.log(localStorage.getItem("mail"));
-    //   console.log(localStorage.getItem("password"));
-    //   console.log(localStorage.getItem("status"));
-    //   console.log(localStorage.getItem("name"));
-    //   console.log(localStorage.getItem("surname"));
-    //   console.log(localStorage.getItem("phone"));
-    //   console.log(localStorage.getItem("address"));
-    //   console.log(localStorage.getItem("username"));
-    // }
-
   };
 
   return (
     <div
       id="id"
-      className="flex justify-center  w-screen h-screen bg-white fixed top-0 left-0 z-50"
+      className="fixed left-0 top-0 z-50 flex h-screen w-screen items-center justify-center bg-[#f6f8fd]"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 w-full bg-[url(/public/Loginbg.png)] bg-no-repeat bg-bottom object-bottom max-w-6xl shadow-lg rounded-2xl overflow-hidden bg-white">
+      <div className="card-surface grid w-full max-w-6xl grid-cols-1 overflow-hidden rounded-2xl bg-[url(/public/Loginbg.png)] bg-bottom bg-no-repeat md:grid-cols-2">
         <div className="p-10 flex flex-col justify-center">
           <div className="flex gap-[26px] justify-center items-center mb-10">
             <img src={logo} alt="Logo" className="h-10" />
@@ -133,13 +91,9 @@ const Login = () => {
               onSubmit={(e) => handleSubmit(e)}
             >
               {error && <p className="text-red-500 text-sm">{error}</p>}
-              <div className="flex items-center border border-gray-300 rounded-[10px]  ">
+              <div className="flex items-center rounded-[10px] border border-gray-300">
                 <div
                   className="w-[40px] h-[40px] text-white bg-borderlog mr-2 p-3 rounded-[9px] rounded-e-none "
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
                 >
                   <IoMail />
                 </div>
@@ -152,13 +106,9 @@ const Login = () => {
                 />
               </div>
 
-              <div className="flex items-center border border-gray-300 rounded-[10px] ">
+              <div className="flex items-center rounded-[10px] border border-gray-300">
                 <div
                   className="w-[40px] h-[40px] text-white bg-borderlog mr-2 p-3 rounded-[9px] rounded-e-none "
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
                 >
                   <HiLockClosed />
                 </div>
@@ -168,7 +118,7 @@ const Login = () => {
                   className="w-[90%] border-none focus:outline-none focus:ring-0"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  autocomplete="current-password"
+                  autoComplete="current-password"
                 />
               </div>
 
@@ -187,7 +137,7 @@ const Login = () => {
 
               <button
                 type="submit"
-                className="w-full bg-[#c2a37a] hover:bg-[#a98a64] text-white font-semibold py-2 rounded-[10px]"
+                className="w-full rounded-[10px] bg-[#c2a37a] py-2 font-semibold text-white transition-colors hover:bg-[#a98a64]"
               >
                 Kirish
               </button>

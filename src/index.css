@@ -3,11 +3,82 @@
 @tailwind utilities;
 
 :root {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  }
-  
-  * {
-    margin: 0;
-    padding: 0;
-  }
+  --app-bg: #f6f8fd;
+  --panel-bg: #ffffff;
+  --sidebar-bg: #282d32;
+  --accent: #c6a47e;
+  --accent-hover: #b8966e;
+  --text-primary: #20242a;
+  --text-muted: #6b7280;
+  --border-soft: #e6e9f0;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-soft: 0 6px 20px rgba(24, 39, 75, 0.08);
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--text-primary);
+}
+
+.card-surface {
+  background: var(--panel-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.page-shell {
+  width: 100%;
+  padding: 16px;
+  background: var(--app-bg);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.table-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.table-head-row {
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.table-data-row {
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef1f7;
+  font-size: 13px;
+  color: #2f3743;
+  transition: all 0.2s ease;
+}
+
+.table-data-row:hover {
+  background: #faf7f1;
+}
   

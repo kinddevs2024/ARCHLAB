@@ -8,31 +8,17 @@ import { GoChevronLeft, GoChevronRight } from "react-icons/go";
 export function Hatlar() {
   const [projects, setProjects] = useState([]);
   const [year, setYear] = useState(2021);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isClicked, setIsClicked] = useState(false);
-  const [statuscolor, setStatuscolor] = useState(null);
-
-
-  useEffect(() => {
-    setStatuscolor(document.getElementById("statusicon"));
-  }, []);
 
   const downloadFile = async (fileUrl, fileName) => {
     try {
-      setIsDownloading(true); // старт загрузки
-
-      // Создание ссылки для скачивания
       const link = document.createElement("a");
       link.href = fileUrl;
       link.download = fileName || "file";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      setTimeout(() => setIsDownloading(false), 1000); // небольшая задержка для красоты
     } catch (error) {
       console.error("Ошибка при скачивании файла:", error);
-      setIsDownloading(false);
     }
   };
 
@@ -41,7 +27,7 @@ export function Hatlar() {
     fetchProjects(year);
   }, [year]);
 
-  const fetchProjects = async (selectedYear) => {
+  const fetchProjects = async () => {
     try {
       // Example: Replace this wip your real API call
       // const response = await axios.get(`/api/projects?year=${selectedYear}`);
@@ -124,20 +110,14 @@ export function Hatlar() {
     }
   };
 
-  const [activeButton, setActiveButton] = React.useState(null);
-
-  const handleButtonClick = (label) => {
-    setActiveButton(label);
-  };
-
   return (
     <>
       <Analytics />
-      <div className="flex flex-col bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
-        <div className="flex w-full items-center justify-between mb-6 mt-6">
-          <h1 className="text-3xl font-bold ml-4">Xatlar</h1>
+      <div className="page-shell">
+        <div className="panel-header">
+          <h1 className="ml-1 text-3xl font-bold">Xatlar</h1>
 
-          <div className="flex justify-center bg-white p-2 pr-3 pl-3 rounded-xl h-[49px] items-center space-x-2">
+          <div className="card-surface flex h-[49px] items-center justify-center space-x-2 p-2 pl-3 pr-3">
             <Button
               onClick={decrementYears}
               className="px-[0px] py-[0px] w-[32px] h-[32px] text-black shadow-none bg-[#F1F1F1] duration-300 rounded-xl"
@@ -169,45 +149,33 @@ export function Hatlar() {
             </Button>
           </div>
         </div>
-        <div className="w-full flex justify-center items-center">
-          <div className="w-full rounded-lg overflow-hidden">
-            <div className="text-[#3A3A49] text-left text-sm">
-              <div className="flex items-center justify-between mr-[15px] ml-[15px]">
-                <p className="py-3 p">№</p>
-                <p className="py-3 px-4 ">Nomi</p>
-                <div className="flex items-center pr-12 justify-center">
-                  <p className="py-3 px-1 ">Sana</p>
-                  <div className="space-y-[2px]">
-                    <div className="w-0 h-0 border-b-[5px] border-[#C6A47E] rounded-2xl border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent"></div>
-                    <div className="w-0 h-0 border-t-[5px] border-[#ADC0F8] rounded-2xl border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent"></div>
-                  </div>
-                </div>
-                <p className="py-3 px-4  ml-4">Buyurtmachi ismi</p>
-                <div className="flex items-center pr-[52px] justify-center gap-[58px]">
-                  <p className="py-3 px-4 ">Tel raqam</p>
-                  <p className="py-3 px-4 ">Dog summa</p>
-                </div>
-                <div className="flex items-center justify-evenly space-x-2">
-                  <p className="py-3 px-4 ml-14">Yuklash</p>
-                </div>
+        <div className="table-card w-full">
+          <div className="overflow-x-auto">
+            <div className="min-w-[1150px]">
+              <div className="table-head-row grid-cols-[0.5fr_1.6fr_1fr_1.4fr_1fr_1fr_1.6fr]">
+                <p>№</p>
+                <p>Nomi</p>
+                <p>Sana</p>
+                <p>Buyurtmachi</p>
+                <p>Tel raqam</p>
+                <p>Dog summa</p>
+                <p>Yuklash</p>
               </div>
-            </div>
-            <div>
-              <div className="  overflow-x-auto gap-3 text-sm">
+              <div>
                 {projects.length > 0 ? (
                   projects.map((project, index) => (
                     <div
                       key={index}
-                      className="flex space-x-11 justify-between pr-[15px] pl-[15px] items-center rounded-lg group hover:bg-borderlog text-[#333333] hover:text-white"
+                      className="table-data-row grid-cols-[0.5fr_1.6fr_1fr_1.4fr_1fr_1fr_1.6fr]"
                     >
-                      <p className="py-3 px-[0px]">{index + 1}</p>
-                      <p className="py-3 px-[0px]">{project.name}</p>
-                      <p className="py-3 px-[0px]">{project.date}</p>
-                      <p className="py-3 px-[0px]">{project.zakaznemer}</p>
-                      <p className="py-3 px-[0px]">{project.tel}</p>
-                      <p className="py-3 px-[0px]">{project.dogmany}.000</p>
-                      <div className="flex items-center justify-evenly space-x-2">
-                        <p className="py-3 px-[0px]">
+                      <p>{index + 1}</p>
+                      <p>{project.name}</p>
+                      <p>{project.date}</p>
+                      <p>{project.zakaznemer}</p>
+                      <p>{project.tel}</p>
+                      <p>{project.dogmany}.000</p>
+                      <div className="flex items-center gap-2">
+                        <p>
                           {project.fileUrl ? (
                             <button
                               onClick={() =>
@@ -216,22 +184,22 @@ export function Hatlar() {
                                   `${project.object}.zip`
                                 )
                               }
-                              className="bg-borderlog flex justify-center items-center gap-2  text-white px-3 py-2 rounded-md group-hover:bg-white group-hover:text-black"
+                              className="flex items-center justify-center gap-2 rounded-md bg-borderlog px-3 py-2 text-white transition-colors hover:bg-[#b28f67]"
                             >
                               Yuklash
-                              <button
+                              <span
                                 className={`w-[32px] h-[16px] rounded-[12px] items-center text-[10px] font-extrabold text-center flex justify-center gap-2 bg-[#FFFFFF33] group-hover:bg-[#00000033] ${
-                                  isClicked ? "bg-[#00000033]" : "bg-[#FFFFFF33]"
+                                  "bg-[#FFFFFF33]"
                                   }`}
                               >
                                 <p>PDF</p>
-                              </button>
+                              </span>
                             </button>
                           ) : (
                             "No File"
                           )}
                         </p>
-                        <p className="py-3 px-[0px]">
+                        <p>
                           {project.zipfileUrl ? (
                             <button
                               onClick={() =>
@@ -240,12 +208,12 @@ export function Hatlar() {
                                   `${project.object}.zip`
                                 )
                               }
-                              className="bg-borderlog flex items-center justify-center gap-2 text-white px-3 py-2 rounded-md group-hover:bg-white group-hover:text-black"
+                              className="flex items-center justify-center gap-2 rounded-md bg-borderlog px-3 py-2 text-white transition-colors hover:bg-[#b28f67]"
                             >
                               Yuklash
-                              <button className=" w-[32px] h-[16px] rounded-[12px]  items-center text-[10px] font-extrabold text-center flex justify-center gap-2 bg-[#FFFFFF33]  group-hover:bg-[#00000033]">
+                              <span className=" w-[32px] h-[16px] rounded-[12px]  items-center text-[10px] font-extrabold text-center flex justify-center gap-2 bg-[#FFFFFF33]  group-hover:bg-[#00000033]">
                                 <p>DOC</p>
-                              </button>
+                              </span>
                             </button>
                           ) : (
                             "No File"

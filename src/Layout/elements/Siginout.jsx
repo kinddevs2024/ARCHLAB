@@ -12,12 +12,6 @@ export function Siginout() {
   const [size, setSize] = React.useState(null);
 
   const handleOpen = (value) => setSize(value);
-  const handleLogout = () => {
-    // Clear localStorage
-    localStorage.clear();
-    // Refresh the window
-    window.location.reload();
-  };
   return (
     <>
       <div className="mb-3 flex gap-3">

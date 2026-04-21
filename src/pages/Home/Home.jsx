@@ -7,29 +7,20 @@ import { Addproject } from "./homeelements/Addproject.jsx";
 import Info from "./homeelements/Info.jsx";
 import AvatarUploadPage from "./homeelements/AvatarUploadPage.jsx";
 
-const statusColors = {
-  Tayyorlandi: "bg-green-500",
-  Jarayonda: "bg-orange-400",
-};
-
 export function Home() {
   const [projects, setProjects] = useState([]);
   const [year, setYear] = useState(2021);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const downloadFile = async (fileUrl, fileName) => {
     try {
-      setIsDownloading(true);
       const link = document.createElement("a");
       link.href = fileUrl;
       link.download = fileName || "file";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setTimeout(() => setIsDownloading(false), 1000);
     } catch (error) {
       console.error("Ошибка при скачивании файла:", error);
-      setIsDownloading(false);
     }
   };
 
@@ -85,11 +76,11 @@ export function Home() {
 
   return (
     <>
-      <div className="flex flex-col pr-1 pl-1 bg-[#f6f8fd] justify-start m-0 p-0 items-start w-full bg-bg">
-        <div className="flex w-full items-center justify-between mb-6 mt-6">
-          <h1 className="text-3xl font-bold ml-4">Loyihalar</h1>
-          <AvatarUploadPage/>
-          <div className="flex justify-center bg-white p-2 pr-3 pl-3 rounded-xl h-[49px] items-center space-x-2">
+      <div className="page-shell">
+        <div className="panel-header">
+          <h1 className="ml-1 text-3xl font-bold">Loyihalar</h1>
+          <AvatarUploadPage />
+          <div className="card-surface flex h-[49px] items-center justify-center space-x-2 p-2 pl-3 pr-3">
             <Button
               onClick={decrementYears}
               className="px-[0px] py-[0px] w-[32px] h-[32px] text-black shadow-none bg-[#F1F1F1] duration-300 rounded-xl"
@@ -123,62 +114,49 @@ export function Home() {
           <Addproject />
         </div>
 
-        <div className="w-full flex justify-center items-center">
-          <div className="w-full rounded-lg overflow-hidden">
-            <div className="text-[#3A3A49] text-left text-sm">
-              <div className="flex items-center justify-between space-x-2">
-                <p className="py-3 px-44">Kompaniya nomi</p>
-                <p className="py-3 px-4">Obyekt nomi</p>
-                <p className="py-3 px-4">Obyekt joyi</p>
-                <div className="flex items-center justify-evenly space-x-2">
-                  <div className="flex items-center pr-12 justify-center">
-                    <p className="py-3 px-1 ">Sana</p>
-                    <div className="space-y-[2px]">
-                      <div className="w-0 h-0 border-b-[5px] border-[#C6A47E] rounded-2xl border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent"></div>
-                      <div className="w-0 h-0 border-t-[5px] border-[#ADC0F8] rounded-2xl border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent"></div>
-                    </div>
-                  </div>
-                  <p className="py-3 px-4">Yuklash</p>
-                </div>
+        <div className="table-card w-full">
+          <div className="overflow-x-auto">
+            <div className="min-w-[1000px]">
+              <div className="table-head-row grid-cols-[2.4fr_1.2fr_1.2fr_0.9fr_0.9fr_0.9fr]">
+                <p>Kompaniya nomi</p>
+                <p>Obyekt nomi</p>
+                <p>Obyekt joyi</p>
+                <p>Status</p>
+                <p>Sana</p>
+                <p>Yuklash</p>
               </div>
-            </div>
-            <div>
-              <div className="  overflow-x-auto gap-3 text-sm">
+              <div>
                 {projects.length > 0 ? (
                   projects.map((project, index) => (
                     <div
                       key={index}
-                      className="flex space-x-11 justify-evenly items-center rounded-lg group hover:bg-borderlog text-[#333333] hover:text-white"
+                      className="table-data-row grid-cols-[2.4fr_1.2fr_1.2fr_0.9fr_0.9fr_0.9fr]"
                     >
-                      {/* !info pro project */}
-
-                      <div className="py-3 px-4">
-                        <div className="flex items-center justify-start space-x-2 gap-3">
+                      <div className="py-1">
+                        <div className="flex items-center justify-start gap-3">
                           <Info reponse={project} />
-                          <div className="flex items-center justify-start w-[70px]">
-                            <Button
-                              id="statusicon"
-                              className={`${
-                                statusceker(project.status).color
-                              } text-white px-4 py-2 rounded-[12px]  `}
-                            >
-                              {statusceker(project.status).label}
-                            </Button>
-                          </div>
                           <div className="flex  items-center  gap-3">
                             {project.company}
                           </div>
                         </div>
                       </div>
-                      <p className="py-3 px-[0px]">{project.client}</p>
-                      <p className="py-3 px-[0px]">{project.assistant}</p>
-                      <p className="py-3 px-[0px]">{project.status}</p>
-                      <p className="py-3 px-[0px]">
+                      <p>{project.client}</p>
+                      <p>{project.assistant}</p>
+                      <p>
+                        <span
+                          className={`rounded-[12px] px-3 py-1 text-xs font-semibold text-white ${
+                            statusceker(project.status).color
+                          }`}
+                        >
+                          {statusceker(project.status).label}
+                        </span>
+                      </p>
+                      <p>
                         {project.date
                           ? new Date(project.date).getFullYear()
                           : ""}
                       </p>
-                      <p className="py-3 px-[0px]">
+                      <p>
                         {project.fileUrl ? (
                           <button
                             onClick={() =>
@@ -187,7 +165,7 @@ export function Home() {
                                 `${project.object}.zip`
                               )
                             }
-                            className="bg-borderlog text-white px-4 py-2 rounded-md group-hover:bg-white group-hover:text-black"
+                            className="rounded-md bg-borderlog px-4 py-2 text-white transition-colors hover:bg-[#b28f67]"
                           >
                             Yuklash
                           </button>

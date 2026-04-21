@@ -31,7 +31,7 @@ export function Addproject() {
     setLoading(true);
     try {
       const date = new Date().toISOString(); // current date and time
-      const response = await axios.post("http://localhost:3005/api/projects", {
+      await axios.post("http://localhost:3005/api/projects", {
         client,
         assistant,
         master,
@@ -54,7 +54,12 @@ export function Addproject() {
       <Button onClick={handleOpen} className=" bg-border">
         Yangi loyiha
       </Button>
-      <Dialog size="sm" open={open} handler={handleOpen} className="p-4">
+      <Dialog
+        size="sm"
+        open={open}
+        handler={handleOpen}
+        className="rounded-2xl p-4 shadow-2xl"
+      >
         <DialogHeader className="relative m-0 block">
           <Typography variant="h4" color="blue-gray">
             Loyiha yaratish{" "}
@@ -212,9 +217,9 @@ export function Addproject() {
             />
           </div>
         </DialogBody>
-        <DialogFooter>
+        <DialogFooter className="border-t border-[#eef1f7] pt-4">
           <Button
-            className="ml-auto bg-borderlog"
+            className="ml-auto rounded-xl bg-borderlog"
             onClick={handleSubmit}
             disabled={loading}
           >

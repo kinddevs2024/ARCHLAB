@@ -1,10 +1,9 @@
 import React from "react";
 import logo from "/public/logo.svg";
-import { Button, Button as MaterialButton } from "@material-tailwind/react";
+import { Button } from "@material-tailwind/react";
 import { Link } from "react-router-dom";
 import {
   FaProjectDiagram,
-  FaDoorOpen,
   FaUserFriends,
   FaComments,
   FaCog,
@@ -18,13 +17,6 @@ import {
 import Siginout from "./elements/Siginout";
 
 const Bar = () => {
-  const handleLogout = () => {
-    // Clear localStorage
-    localStorage.clear();
-    // Refresh the window
-    window.location.reload();
-  };
-
   const [activeButton, setActiveButton] = React.useState(null);
 
   const handleButtonClick = (label) => {
@@ -32,8 +24,8 @@ const Bar = () => {
   };
 
   return (
-    <div className="flex bg-barbg flex-col justify-start items-center h-screen 2xl:w-[280px] w-1/4 p-[10px] shadow-lg">
-      <div className="flex gap-4 items-center mb-4 justify-start w-full ml-8 mt-3">
+    <aside className="flex h-screen w-1/4 flex-col items-center justify-start bg-barbg p-[10px] shadow-lg 2xl:w-[280px]">
+      <div className="mb-4 ml-4 mt-3 flex w-full items-center justify-start gap-4">
         <img
           src={logo}
           alt="Logo"
@@ -41,7 +33,7 @@ const Bar = () => {
         />
         <h1 className="text-[25px] text-white font-semibold">ARCH LAB</h1>
       </div>
-      <div className="gap-1 text-white w-64 flex flex-col justify-between items-start h-full">
+      <div className="flex h-full w-64 flex-col items-start justify-between gap-1 text-white">
         {[
           { icon: <FaProjectDiagram />, label: "Loihalar" },
           { icon: <FaLayerGroup />, label: "Yakka tartibdagi loyihalar" },
@@ -53,12 +45,13 @@ const Bar = () => {
           { icon: <FaClipboardList />, label: "Shartnomalar" },
           { icon: <FaEnvelope />, label: "Xatlar" },
           { icon: <FaClipboardList />, label: "Buyruqlar" },
+          { icon: <FaComments />, label: "Chat" },
           { icon: <FaUserFriends />, label: "Foydalanuvchilar" },
           { icon: <FaCog />, label: "Sozlamalar" },
         ].map((button, index) => (
           <Link to={`/${button.label}`} className=" w-full" key={index}>
             <Button
-              className={`p-2 w-full shadow-none ${
+              className={`w-full rounded-xl p-2 shadow-none ${
                 button.label === activeButton
                   ? "bg-[#FAF8F21A] text-borderlog"
                   : "bg-[#282D32] hover:bg-[#343A40] "
@@ -73,7 +66,7 @@ const Bar = () => {
           <Siginout />
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 
