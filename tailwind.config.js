@@ -1,32 +1,14 @@
 /** @type {import('tailwindcss').Config} */
-const withMT = require("@material-tailwind/react/utils/withMT");
-
-
-
-export default withMT({
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+export default {
+  darkMode: "class",
+  content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
-    container: {
-      center: true,
-      padding: {
-        DEFAULT: "1rem",
-        sm: "2rem",
-        lg: "4rem",
-        xl: "5rem",
-        "2xl": "6rem",
-      },
-    },
     extend: {
       colors: {
-        border: "#C6A47E",
-        borderlog: "#C6A47E",
-        barbg: "#282D32",
-        btnhover: "#FAF8F21A",
-        Tayyorlandi: "bg-green-500",
-        Jarayonda: "bg-orange-400",
-        textcolor: "#24243E",
+        accent: "#C6A47E",
+        sidebar: "#282D32",
       },
     },
   },
   plugins: [],
-});
+};
