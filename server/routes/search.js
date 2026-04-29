@@ -11,7 +11,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const searchRouter = express.Router();
 
-searchRouter.use(authRequired, requireRole(["Owner"]));
+searchRouter.use(authRequired);
 
 searchRouter.get("/", asyncHandler(async (req, res) => {
   const q = String(req.query.q || "").trim();

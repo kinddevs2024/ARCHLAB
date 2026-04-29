@@ -11,7 +11,7 @@ const number = (value, fallback) => {
 export const config = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: number(process.env.PORT, 4000),
-  mongoUri: process.env.MONGODB_URI,
+  mongoUri: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/archlab",
   jwtSecret: process.env.JWT_SECRET || "archlab-local-dev-secret",
   jwtAccessTtl: process.env.JWT_ACCESS_TTL || "7d",
   corsOrigin: (process.env.CORS_ORIGIN || "http://127.0.0.1:5173")

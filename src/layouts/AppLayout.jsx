@@ -4,12 +4,19 @@ import {
   FaBell,
   FaBriefcase,
   FaClipboardCheck,
+  FaClipboardList,
   FaCog,
+  FaComments,
   FaEnvelope,
+  FaFileContract,
   FaFolder,
   FaLayerGroup,
+  FaDraftingCompass,
+  FaMicroscope,
   FaMoon,
+  FaProjectDiagram,
   FaSearch,
+  FaShieldAlt,
   FaSignOutAlt,
   FaSun,
   FaUsers,
@@ -21,15 +28,17 @@ import { useAuth } from "../context/AuthContext";
 
 const items = [
   { to: "/projects", label: "Loyihalar", icon: FaLayerGroup },
-  { to: "/projects/single", label: "Yakka tartibdagi loyihalar", icon: FaLayerGroup },
-  { to: "/projects/interior", label: "Interyer", icon: FaLayerGroup },
-  { to: "/projects/tex-obs", label: "Tex-obs", icon: FaClipboardCheck },
-  { to: "/projects/laboratory", label: "Laboratoriya", icon: FaFolder },
-  { to: "/projects/control", label: "Tashqi nazorat", icon: FaBriefcase },
+  { to: "/projects/single", label: "Yakka tartibdagi loyihalar", icon: FaProjectDiagram },
+  { to: "/projects/interior", label: "Interyer", icon: FaDraftingCompass },
+  { to: "/projects/tex-obs", label: "Tex-obs", icon: FaSearch },
+  { to: "/projects/laboratory", label: "Laboratoriya", icon: FaMicroscope },
+  { to: "/projects/control", label: "Tashqi nazorat", icon: FaShieldAlt },
   { to: "/projects/render", label: "Rendr", icon: FaFolder },
-  { to: "/contracts", label: "Shartnomalar", icon: FaBriefcase },
+  { to: "/contracts", label: "Shartnomalar", icon: FaFileContract },
   { to: "/letters", label: "Xatlar", icon: FaEnvelope },
-  { to: "/orders", label: "Buyuruqlar", icon: FaBriefcase },
+  { to: "/orders", label: "Buyuruqlar", icon: FaClipboardList },
+  { to: "/chat", label: "Chat", icon: FaComments },
+  { to: "/notifications", label: "Bildirishnomalar", icon: FaBell },
   { to: "/users", label: "Foydalanuvchilar", icon: FaUsers },
   { to: "/settings", label: "Sozlamalar", icon: FaCog },
 ];
@@ -84,35 +93,21 @@ export function AppLayout() {
   }, []);
 
   useEffect(() => {
-    if (user && hasRole("Owner")) loadNotifications().catch(() => {});
-  }, [user, hasRole, loadNotifications]);
+    if (user) loadNotifications().catch(() => {});
+  }, [user, loadNotifications]);
 
   const activePath = useMemo(() => location.pathname, [location.pathname]);
   if (loading) return <div className="grid min-h-screen place-items-center">Yuklanmoqda...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (!hasRole("Owner")) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-[#f6f8fd] px-4 text-center dark:bg-[#161a1f]">
-        <div className="max-w-md rounded-xl border border-[#e6e9f0] bg-white p-8 shadow-sm dark:border-[#323944] dark:bg-[#20262d]">
-          <img src="/logo.svg" alt="ARCH LAB" className="mx-auto mb-5 h-14 w-14 rounded-xl" />
-          <h1 className="text-2xl font-bold">Owner ruxsati kerak</h1>
-          <p className="mt-3 text-sm text-[#6b7280] dark:text-[#a9b1bf]">
-            Hozircha workroom faqat Owner uchun ochiq. Owner sizni loyiha va vazifalarga tayinlagandan keyin ishchi kabinet ochiladi.
-          </p>
-          <button onClick={logout} className="mt-6 h-11 rounded-lg bg-[#C6A47E] px-6 text-sm font-semibold text-white">
-            Chiqish
-          </button>
-        </div>
-      </div>
-    );
-  }
+
+  const roleLabel = user?.status === "Owner" ? "Owner" : user?.status === "Manager" ? "Manager" : "Ishchi";
 
   return (
     <div className="min-h-screen bg-[#f4f6fb] text-[#2a2e37] dark:bg-[#161a1f] dark:text-[#f7f8fb]">
       <aside className={`fixed left-0 top-0 z-20 flex h-screen flex-col bg-[#282D32] px-[10px] py-[26px] text-white transition-all ${collapsed ? "w-[92px]" : "w-[280px]"}`}>
         <Link to="/projects" className={`mb-[28px] flex items-center gap-[17px] ${collapsed ? "justify-center px-0" : "px-[35px]"}`}>
           <img src="/logo.svg" alt="ARCH LAB" className="h-[47px] w-[47px] rounded-[11px] border border-[#C9A77F]" />
-          {!collapsed ? <div className="text-[27px] font-extrabold tracking-[-0.02em]">ARCH LAB</div> : null}
+          {!collapsed ? <div className="text-2xl font-extrabold tracking-[-0.02em]">ARCH LAB</div> : null}
         </Link>
         <nav className="flex flex-1 flex-col gap-[13px] overflow-y-auto pr-1">
           {items.map((item) => {
@@ -139,17 +134,17 @@ export function AppLayout() {
       </aside>
 
       <main className={`min-h-screen transition-all ${collapsed ? "ml-[92px]" : "ml-[280px]"}`}>
-        <header className="sticky top-0 z-10 grid h-[100px] grid-cols-[80px_1fr_auto] items-center border-b border-[#cfd3dc] bg-white px-6 dark:border-[#323944] dark:bg-[#20262d]">
-          <button className="grid h-10 w-10 place-items-center text-[25px] text-black dark:text-white" onClick={() => setCollapsed((value) => !value)} title="Sidebar">
+        <header className="sticky top-0 z-10 flex h-[100px] items-center justify-between border-b border-[#cfd3dc] bg-white px-6 dark:border-[#323944] dark:bg-[#20262d]">
+          <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f4f6fb] text-[22px] text-black dark:bg-[#161a1f] dark:text-white" onClick={() => setCollapsed((value) => !value)} title="Sidebar">
             <FaBars />
           </button>
-          <div className="relative mx-auto">
-            <div className="flex h-[52px] w-[350px] items-center gap-3 rounded-[12px] border border-[#c8ceda] bg-white px-4 dark:border-[#323944] dark:bg-[#161a1f]">
+          <div className="relative">
+            <div className="flex h-[52px] min-w-[320px] max-w-[520px] items-center gap-3 rounded-[12px] border border-[#c8ceda] bg-white px-4 dark:border-[#323944] dark:bg-[#161a1f]">
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Qidirish" className="w-full bg-transparent text-[16px] outline-none placeholder:text-[#596071]" />
               <FaSearch className="text-[24px] text-black dark:text-white" />
             </div>
             {searchResults.length ? (
-              <div className="absolute left-0 top-[60px] z-30 w-[350px] overflow-hidden rounded-xl border border-[#e6e9f0] bg-white shadow-xl dark:border-[#323944] dark:bg-[#20262d]">
+              <div className="absolute left-0 top-[60px] z-30 w-full overflow-hidden rounded-xl border border-[#e6e9f0] bg-white shadow-xl dark:border-[#323944] dark:bg-[#20262d]">
                 {searchResults.map((result) => (
                   <button
                     key={`${result.type}-${result.id}`}
@@ -167,13 +162,13 @@ export function AppLayout() {
               </div>
             ) : null}
           </div>
-          <div className="flex items-center gap-7">
-            <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f4f6fb] text-[#C9A77F] dark:bg-[#161a1f]" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+          <div className="flex items-center gap-4">
+            <button className="grid h-10 w-10 place-items-center rounded-full bg-[#f4f6fb] text-[#C9A77F] dark:bg-[#161a1f]" onClick={() => setTheme(theme === "dark" ? "light" : "dark") }>
               {theme === "dark" ? <FaSun /> : <FaMoon />}
             </button>
             <div className="relative">
-              <button className="relative text-[#C9A77F]" onClick={() => setNotificationsOpen((value) => !value)}>
-                <FaBell className="text-[24px]" />
+              <button className="relative grid h-10 w-10 place-items-center rounded-full bg-[#f4f6fb] text-[#C9A77F] dark:bg-[#161a1f]" onClick={() => setNotificationsOpen((value) => !value)}>
+                <FaBell className="text-[18px]" />
                 {unread ? <span className="absolute right-0 top-0 h-[10px] w-[10px] rounded-full bg-[#c93c45]" /> : null}
               </button>
               {notificationsOpen ? (
@@ -191,12 +186,14 @@ export function AppLayout() {
                 </div>
               ) : null}
             </div>
-            <div className="flex items-center gap-[20px]">
+            <div className="flex items-center gap-3 rounded-[20px] bg-[#f4f6fb] px-4 py-2 dark:bg-[#20262d]">
               <div className="text-right">
-                <p className="text-[16px] font-medium text-black dark:text-white">{user.name || user.username || "Owner"} {user.surname}</p>
-                <p className="mt-1 text-[12px] text-[#8b8b8b]">Asosiy arxitektor</p>
+                <p className="text-sm font-semibold text-black dark:text-white">{user.name || user.username || "Owner"} {user.surname}</p>
+                <p className="text-[12px] text-[#8b8b8b] dark:text-[#a9b1bf]">{roleLabel}</p>
               </div>
-              <AuthImage src={user?.avatar} alt="" className="h-[56px] w-[56px] rounded-full bg-[#ffb51b] object-cover ring-[8px] ring-[#ffb51b]" />
+              <Link to="/settings">
+                <AuthImage src={user?.avatar} alt="" className="h-[48px] w-[48px] rounded-full bg-[#ffb51b] object-cover ring-[4px] ring-[#ffb51b]" />
+              </Link>
             </div>
           </div>
         </header>
