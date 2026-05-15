@@ -2,8 +2,6 @@ import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-d
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FaBell,
-  FaBriefcase,
-  FaClipboardCheck,
   FaClipboardList,
   FaCog,
   FaComments,
@@ -54,7 +52,7 @@ const resultPath = (result) => {
 };
 
 export function AppLayout() {
-  const { user, loading, logout, hasRole } = useAuth();
+  const { user, loading, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("sidebar") === "collapsed");
