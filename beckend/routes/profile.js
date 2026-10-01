@@ -30,12 +30,13 @@ profileRouter.patch("/", asyncHandler(async (req, res) => {
 profileRouter.patch("/password", asyncHandler(async (req, res) => {
   const data = z.object({
     currentPassword: z.string().min(1),
-    newPassword: z.string().min(6),
+    newPassword: z.string().min(12).max(72),
   }).parse(req.body);
-  const user = await User.findById(req.user.id).select("+password");
+  const user = await User.findById(req.user.id).select("+password +sessionVersion");
   const ok = await bcrypt.compare(data.currentPassword, user.password);
   if (!ok) throw new ApiError(400, "Hozirgi parol noto'g'ri", "BAD_PASSWORD");
   user.password = await bcrypt.hash(data.newPassword, 10);
+  user.sessionVersion += 1;
   await user.save();
   await writeAudit(req, "password", "Profile", req.user.id);
   res.json({ ok: true });

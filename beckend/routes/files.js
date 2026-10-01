@@ -106,7 +106,7 @@ filesRouter.get(
     const file = await File.findById(req.params.id);
     if (!file) throw notFound("Fayl topilmadi");
     const resolved = path.resolve(file.path);
-    if (!resolved.startsWith(config.uploadDir) || !fs.existsSync(resolved)) {
+    if (!resolved.startsWith(config.uploadDir + path.sep) || !fs.existsSync(resolved)) {
       throw notFound("Fayl diskda topilmadi");
     }
     await writeAudit(req, "download", "File", file._id, { originalName: file.originalName });
@@ -120,7 +120,7 @@ filesRouter.delete(
     const file = await File.findByIdAndDelete(req.params.id);
     if (!file) throw notFound("Fayl topilmadi");
     const resolved = path.resolve(file.path);
-    if (resolved.startsWith(config.uploadDir) && fs.existsSync(resolved)) {
+    if (resolved.startsWith(config.uploadDir + path.sep) && fs.existsSync(resolved)) {
       fs.unlinkSync(resolved);
     }
     await writeAudit(req, "delete", "File", file._id, { originalName: file.originalName });

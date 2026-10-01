@@ -19,7 +19,7 @@ export const errorHandler = (error, _req, res, _next) => {
 
   const status = error.status || 500;
   res.status(status).json({
-    message: error.message || "Serverda xatolik yuz berdi",
+    message: status >= 500 ? "Serverda xatolik yuz berdi" : error.message,
     code: error.code || "SERVER_ERROR",
     fields: error.fields,
   });

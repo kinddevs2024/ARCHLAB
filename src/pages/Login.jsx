@@ -1,17 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { FaEnvelope, FaEye, FaEyeSlash, FaLock, FaMapMarkerAlt, FaPhoneAlt, FaUser } from "react-icons/fa";
+import { FaEnvelope, FaEye, FaEyeSlash, FaLock } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
-
-const emptyRegister = {
-  name: "",
-  surname: "",
-  phone: "",
-  address: "",
-  username: "",
-  email: "",
-  password: "",
-};
 
 function AuthField({ icon: Icon, className = "", ...props }) {
   const [visible, setVisible] = useState(false);
@@ -44,10 +34,8 @@ function AuthField({ icon: Icon, className = "", ...props }) {
 }
 
 export default function Login() {
-  const { user, login, register } = useAuth();
-  const [mode, setMode] = useState("login");
+  const { user, login } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
-  const [registerForm, setRegisterForm] = useState(emptyRegister);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -57,14 +45,9 @@ export default function Login() {
     event.preventDefault();
     setLoading(true);
     setMessage("");
-    const result = mode === "login" ? await login(form) : await register(registerForm);
+    const result = await login(form);
     if (!result.ok) setMessage(result.message);
     setLoading(false);
-  };
-
-  const updateRegister = (event) => {
-    const { name, value } = event.target;
-    setRegisterForm((current) => ({ ...current, [name]: value }));
   };
 
   return (
@@ -81,35 +64,12 @@ export default function Login() {
             <header className="mb-[204px] flex items-center gap-[28px] max-lg:mb-20">
               <img src="/logo.svg" alt="ARCH LAB" className="h-[50px] w-[50px] rounded-xl" />
               <h1 className="whitespace-nowrap text-[30px] font-extrabold leading-none tracking-[-0.02em] text-[#282a45] max-sm:text-[24px]">
-                ARCH LAB WOORKROOM
+                ARCH LAB WORKROOM
               </h1>
             </header>
 
-            <div className="mb-[28px] flex rounded-[10px] bg-[#f7f4ef] p-1">
-              <button
-                type="button"
-                className={`h-9 flex-1 rounded-[8px] text-[13px] font-bold transition ${mode === "login" ? "bg-[#cfab83] text-white" : "text-[#7b756f]"}`}
-                onClick={() => {
-                  setMode("login");
-                  setMessage("");
-                }}
-              >
-                Kirish
-              </button>
-              <button
-                type="button"
-                className={`h-9 flex-1 rounded-[8px] text-[13px] font-bold transition ${mode === "register" ? "bg-[#cfab83] text-white" : "text-[#7b756f]"}`}
-                onClick={() => {
-                  setMode("register");
-                  setMessage("");
-                }}
-              >
-                Ro'yxat
-              </button>
-            </div>
-
             <h2 className="mb-[27px] text-[26px] font-extrabold leading-none text-black">
-              {mode === "login" ? "Xush kelibsiz" : "Yangi profil"}
+              Xush kelibsiz
             </h2>
             {message ? (
               <div className="mb-4 rounded-[9px] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
@@ -117,35 +77,22 @@ export default function Login() {
               </div>
             ) : null}
 
-            <form className={mode === "login" ? "space-y-[28px]" : "space-y-[14px]"} onSubmit={submit}>
-            {mode === "login" ? (
+            <form className="space-y-[28px]" onSubmit={submit}>
+
               <>
-                <AuthField icon={FaEnvelope} placeholder="Email" type="email" value={form.email} onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))} />
-                <AuthField icon={FaLock} placeholder="Password" type="password" value={form.password} onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))} />
+                <AuthField icon={FaEnvelope} placeholder="Email" type="email" autoComplete="username" required value={form.email} onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))} />
+                <AuthField icon={FaLock} placeholder="Password" type="password" autoComplete="current-password" required value={form.password} onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))} />
                 <label className="flex items-center gap-[15px] text-[14px] font-bold text-[#191919]">
                   <input className="h-[21px] w-[21px] accent-[#617be7]" type="checkbox" defaultChecked />
                   Eslab qolish
                 </label>
               </>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
-                  <AuthField icon={FaUser} name="name" placeholder="Ism (ixtiyoriy)" value={registerForm.name} onChange={updateRegister} />
-                  <AuthField icon={FaUser} name="surname" placeholder="Familiya (ixtiyoriy)" value={registerForm.surname} onChange={updateRegister} />
-                </div>
-                <AuthField icon={FaUser} name="username" placeholder="Username (ixtiyoriy)" value={registerForm.username} onChange={updateRegister} />
-                <AuthField icon={FaPhoneAlt} name="phone" placeholder="Telefon (ixtiyoriy)" value={registerForm.phone} onChange={updateRegister} />
-                <AuthField icon={FaMapMarkerAlt} name="address" placeholder="Manzil (ixtiyoriy)" value={registerForm.address} onChange={updateRegister} />
-                <AuthField icon={FaEnvelope} name="email" placeholder="Email" type="email" required value={registerForm.email} onChange={updateRegister} />
-                <AuthField icon={FaLock} name="password" placeholder="Password" type="password" required value={registerForm.password} onChange={updateRegister} />
-              </>
-            )}
             <button
               className="mt-[5px] h-[55px] w-full rounded-[9px] bg-[#cfab83] text-[16px] font-extrabold text-white shadow-[0_7px_16px_rgba(205,171,131,0.22)] transition hover:bg-[#bf9a6f] disabled:cursor-not-allowed disabled:opacity-70"
               type="submit"
               disabled={loading}
             >
-              {loading ? "Yuklanmoqda..." : mode === "login" ? "Kirish" : "Ro'yxatdan o'tish"}
+              {loading ? "Yuklanmoqda..." : "Kirish"}
             </button>
           </form>
           </div>

@@ -18,7 +18,7 @@ const userSchema = z.object({
   address: z.string().trim().optional().default(""),
   username: z.string().trim().optional().default(""),
   email: z.string().trim().email().toLowerCase(),
-  password: z.string().min(6).optional(),
+  password: z.string().min(12).max(72).optional(),
   status: z.enum(roles).default("User"),
   active: z.boolean().optional(),
 });
@@ -68,7 +68,12 @@ usersRouter.patch(
   asyncHandler(async (req, res) => {
     const data = userSchema.partial().parse(req.body);
     if (data.password) data.password = await bcrypt.hash(data.password, 10);
-    const user = await User.findByIdAndUpdate(req.params.id, data, { new: true });
+    if (req.params.id === req.user.id && (data.active === false || (data.status && data.status !== "Owner"))) {
+      throw new ApiError(400, "Cannot disable or demote your own owner account", "BAD_REQUEST");
+    }
+    const update = { $set: data };
+    if (data.password || data.status || data.active !== undefined) update.$inc = { sessionVersion: 1 };
+    const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!user) throw notFound("Foydalanuvchi topilmadi");
     await writeAudit(req, "update", "User", user._id, { fields: Object.keys(data) });
     res.json(user.toPublic());
@@ -79,7 +84,8 @@ usersRouter.delete(
   "/:id",
   requireRole(["Owner"]),
   asyncHandler(async (req, res) => {
-    const user = await User.findByIdAndUpdate(req.params.id, { active: false }, { new: true });
+    if (req.params.id === req.user.id) throw new ApiError(400, "Cannot disable your own owner account", "BAD_REQUEST");
+    const user = await User.findByIdAndUpdate(req.params.id, { $set: { active: false }, $inc: { sessionVersion: 1 } }, { new: true });
     if (!user) throw notFound("Foydalanuvchi topilmadi");
     await writeAudit(req, "deactivate", "User", user._id);
     res.json(user.toPublic());

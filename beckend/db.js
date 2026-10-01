@@ -7,7 +7,7 @@ export const connectDb = async () => {
     throw new Error("MONGODB_URI is missing. Add it to .env before starting the backend.");
   }
 
-  console.log(`Connecting to MongoDB: ${uri}`);
+  console.log("Connecting to ARCHLAB MongoDB");
   await mongoose.connect(uri, {
     serverSelectionTimeoutMS: 5000,
     family: 4,

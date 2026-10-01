@@ -22,6 +22,18 @@ import { usersRouter } from "./routes/users.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
 
 const app = express();
+app.disable("x-powered-by");
+app.set("trust proxy", "loopback");
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+    const origin = req.get("origin");
+    if ((origin && !config.corsOrigin.includes(origin)) || req.get("sec-fetch-site") === "cross-site") {
+      return res.status(403).json({ message: "Origin rejected", code: "FORBIDDEN" });
+    }
+  }
+  next();
+});
 
 app.use(
   cors({
@@ -60,7 +72,7 @@ app.use(errorHandler);
 
 connectDb()
   .then(() => {
-    app.listen(config.port, () => {
+    app.listen(config.port, config.host, () => {
       console.log(`API server running on http://localhost:${config.port}`);
     });
   })

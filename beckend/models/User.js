@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, select: false },
     avatar: String,
+    sessionVersion: { type: Number, default: 0, select: false },
     active: { type: Boolean, default: true, index: true },
   },
   { timestamps: true }
@@ -23,6 +24,7 @@ userSchema.methods.toPublic = function toPublic() {
   delete data._id;
   delete data.__v;
   delete data.password;
+  delete data.sessionVersion;
   return data;
 };
 

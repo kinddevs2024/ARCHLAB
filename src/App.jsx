@@ -32,6 +32,7 @@ function App() {
           <Route path="/letters" element={<Letters />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/chat" element={<Chat />} />
+          <Route path="/admin" element={<Navigate to="/users" replace />} />
           <Route path="/users" element={<Users />} />
           <Route path="/settings" element={<Settings />} />
         </Route>

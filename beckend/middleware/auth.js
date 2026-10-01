@@ -12,17 +12,17 @@ const rank = {
 
 export const authRequired = async (req, _res, next) => {
   try {
-    const header = req.headers.authorization || "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+    const cookie = (req.headers.cookie || "").split(";").map((part) => part.trim()).find((part) => part.startsWith("archlab_session="));
+    const token = cookie ? cookie.slice("archlab_session=".length) : null;
 
     if (!token) {
       throw new ApiError(401, "Avtorizatsiya kerak", "UNAUTHORIZED");
     }
 
-    const payload = jwt.verify(token, config.jwtSecret);
-    const user = await User.findById(payload.id);
+    const payload = jwt.verify(token, config.jwtSecret, { algorithms: ["HS256"] });
+    const user = await User.findById(payload.id).select("+sessionVersion");
 
-    if (!user || !user.active) {
+    if (!user || !user.active || payload.version !== user.sessionVersion) {
       throw new ApiError(401, "Profil topilmadi yoki bloklangan", "UNAUTHORIZED");
     }
 
