@@ -11,6 +11,7 @@ import Orders from "./pages/Orders";
 import Users from "./pages/Users";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
+import Notifications from "./pages/Notifications";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           <Route path="/admin" element={<Navigate to="/users" replace />} />
           <Route path="/users" element={<Users />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Route>
         <Route path="*" element={<Navigate to="/projects" replace />} />
       </Routes>
