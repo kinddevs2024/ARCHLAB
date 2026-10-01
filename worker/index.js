@@ -22,11 +22,14 @@ export default {
         return Response.json({ message: "ARCHLAB server is temporarily unavailable" }, { status: 502 });
       }
     }
-    let response = await env.ASSETS.fetch(request);
-    if (response.status === 404 && ["GET", "HEAD"].includes(request.method) && request.headers.get("accept")?.includes("text/html")) {
-      const index = new URL(request.url); index.pathname = "/index.html"; index.search = "";
-      response = await env.ASSETS.fetch(new Request(index, request));
+    let assetRequest = request;
+    if (["GET", "HEAD"].includes(request.method) && request.headers.get("accept")?.includes("text/html")) {
+      const index = new URL(request.url);
+      index.pathname = "/";
+      index.search = "";
+      assetRequest = new Request(index, request);
     }
+    const response = await env.ASSETS.fetch(assetRequest);
     const result = new Response(response.body, response);
     result.headers.set("X-Content-Type-Options", "nosniff");
     result.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
