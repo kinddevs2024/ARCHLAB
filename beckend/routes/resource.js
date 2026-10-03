@@ -8,7 +8,8 @@ import {
   checkProject,
   validAssignees,
 } from "../middleware/access.js";
-import { forbidden, notFound } from "../utils/apiError.js";
+import { User } from "../models/User.js";
+import { badRequest, forbidden, notFound } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   patchData,
@@ -102,6 +103,32 @@ export function resourceRouter({
       else if (!isAdmin(req.user) && !task) throw forbidden();
     }
     await validAssignees(data);
+    if (
+      task &&
+      (!item ||
+        Object.hasOwn(data, "assignee") ||
+        Object.hasOwn(data, "project"))
+    ) {
+      const projectId = data.project || item?.project;
+      const assignee = Object.hasOwn(data, "assignee")
+        ? data.assignee
+        : item?.assignee;
+      if (projectId && assignee) {
+        const assignedProject = await checkProject(req.user, projectId);
+        const person = await User.findById(assignee).select("status");
+        const allowed =
+          isAdmin(person) ||
+          [
+            ...(assignedProject.assignedTo || []),
+            assignedProject.helper,
+            assignedProject.master,
+          ]
+            .filter(Boolean)
+            .some((id) => String(id) === String(assignee));
+        if (!allowed)
+          throw badRequest("Avval xodimni ushbu loyihaga biriktiring");
+      }
+    }
   };
   router.get(
     "/",

@@ -60,8 +60,10 @@ export function RealtimeProvider({ user, children }) {
       stream = null,
       pending = [],
       signalQueue = Promise.resolve(),
-      disposed = false;
+      disposed = false,
+      generation = 0;
     const clean = () => {
+      generation++;
       current = null;
       peer?.close();
       peer = null;
@@ -100,6 +102,7 @@ export function RealtimeProvider({ user, children }) {
           ),
       );
     const getMedia = async (video) => {
+      const started = generation;
       if (!navigator.mediaDevices?.getUserMedia)
         throw new Error("Brauzer mikrofonni qo'llab-quvvatlamaydi");
       const next = await navigator.mediaDevices.getUserMedia({
@@ -108,9 +111,9 @@ export function RealtimeProvider({ user, children }) {
           ? { width: { ideal: 640 }, height: { ideal: 480 } }
           : false,
       });
-      if (disposed) {
+      if (disposed || started !== generation) {
         next.getTracks().forEach((t) => t.stop());
-        throw new Error("Aloqa yopildi");
+        throw new DOMException("Aloqa yopildi", "AbortError");
       }
       stream = next;
       setLocal(stream);
@@ -118,9 +121,10 @@ export function RealtimeProvider({ user, children }) {
     const makePeer = async () => {
       if (peer) return peer;
       const id = current?.id,
+        started = generation,
         { data } = await api.get("/api/chat/ice");
-      if (!current || current.id !== id)
-        throw new Error("Qo'ng'iroq yakunlandi");
+      if (!current || current.id !== id || started !== generation || !stream)
+        throw new DOMException("Qo'ng'iroq yakunlandi", "AbortError");
       peer = new RTCPeerConnection({ iceServers: data.iceServers });
       stream.getTracks().forEach((t) => peer.addTrack(t, stream));
       peer.onicecandidate = (e) => {
@@ -165,6 +169,7 @@ export function RealtimeProvider({ user, children }) {
     });
     s.on("call:accepted", async ({ id }) => {
       if (current?.id !== id) return;
+      const started = generation;
       try {
         update({ status: "connecting" });
         const p = await makePeer();
@@ -174,13 +179,18 @@ export function RealtimeProvider({ user, children }) {
           signal: { description: p.localDescription.toJSON() },
         });
       } catch (e) {
-        finish(mediaError(e));
+        if (started === generation && e.name !== "AbortError")
+          finish(mediaError(e));
       }
     });
+    s.on("call:answered_elsewhere", ({ id }) => {
+      if (current?.id === id) clean();
+    });
     s.on("call:signal", (payload) => {
+      const started = generation;
       signalQueue = signalQueue
         .then(async () => {
-          if (current?.id !== payload.id) return;
+          if (current?.id !== payload.id || started !== generation) return;
           const p = await makePeer();
           if (payload.signal.description) {
             await p.setRemoteDescription(payload.signal.description);
@@ -199,7 +209,10 @@ export function RealtimeProvider({ user, children }) {
             else pending.push(payload.signal.candidate);
           }
         })
-        .catch((e) => finish(mediaError(e)));
+        .catch((e) => {
+          if (started === generation && e.name !== "AbortError")
+            finish(mediaError(e));
+        });
     });
     s.on("call:ended", ({ id, reason }) => {
       if (current?.id === id) {
@@ -215,6 +228,8 @@ export function RealtimeProvider({ user, children }) {
           return;
         }
         setError("");
+        const started = generation;
+        update({ video, name, status: "preparing" });
         try {
           await getMedia(video);
           const result = await request("call:invite", {
@@ -222,23 +237,29 @@ export function RealtimeProvider({ user, children }) {
             target,
             video,
           });
-          if (disposed) return;
+          if (disposed || started !== generation) {
+            s.emit("call:end", { id: result.id });
+            return;
+          }
           update({ id: result.id, video, name, status: "ringing" });
         } catch (e) {
-          finish(mediaError(e));
+          if (started === generation && e.name !== "AbortError")
+            finish(mediaError(e));
         }
       },
       accept: async () => {
         if (current?.status !== "incoming") return;
-        const id = current.id;
+        const id = current.id,
+          started = generation;
         try {
           update({ status: "connecting" });
           await getMedia(current.video);
-          if (current?.id !== id) return;
+          if (current?.id !== id || started !== generation) return;
           await makePeer();
           await request("call:accept", { id });
         } catch (e) {
-          finish(mediaError(e));
+          if (started === generation && e.name !== "AbortError")
+            finish(mediaError(e));
         }
       },
       end: () => finish(),

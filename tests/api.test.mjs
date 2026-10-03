@@ -116,6 +116,17 @@ test("isolated staging access and lifecycle", async () => {
     assert.equal((await api(owner, "/projects?search=%5B")).status, 200);
     assert.equal((await api(owner, "/projects?page=1.5")).status, 400);
     assert.equal((await api(owner, "/projects/bad-id")).status, 400);
+    assert.equal(
+      (
+        await api(owner, "/tasks", "POST", {
+          title: marker,
+          project: hidden,
+          assignee: people.User.id,
+        })
+      ).status,
+      400,
+      "Unassigned employees cannot receive inaccessible project tasks",
+    );
     r = await api(owner, "/tasks", "POST", {
       title: marker,
       project: id,

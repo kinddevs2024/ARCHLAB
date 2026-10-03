@@ -341,6 +341,10 @@ try {
   await a.getByRole("button", { name: "Xabar yuborish", exact: true }).click();
   await b.getByRole("button", { name: /sketch.pdf/ }).waitFor();
   report.push("Realtime chat between two sessions and attachment-only message");
+  const extraTab = await userContext.newPage();
+  monitor(extraTab);
+  await extraTab.goto("http://127.0.0.1:5174/chat");
+  await extraTab.getByRole("heading", { name: "Chat", exact: true }).waitFor();
   await a
     .getByRole("button", { name: "Audio qo‘ng‘iroq", exact: true })
     .count()
@@ -355,7 +359,11 @@ try {
           .click();
     });
   await b.getByRole("button", { name: "Qabul qilish", exact: true }).waitFor();
+  await extraTab
+    .getByRole("button", { name: "Qabul qilish", exact: true })
+    .waitFor();
   await b.getByRole("button", { name: "Qabul qilish", exact: true }).click();
+  await extraTab.getByRole("dialog").waitFor({ state: "hidden" });
   await a
     .getByRole("status")
     .filter({ hasText: "Qo'ng'iroq ulandi" })
@@ -366,7 +374,9 @@ try {
     .waitFor({ timeout: 25000 });
   await a.getByRole("button", { name: "Yakunlash", exact: true }).click();
   await b.getByRole("dialog").waitFor({ state: "hidden" });
-  report.push("Audio call: accept, actual WebRTC connection and hang-up");
+  report.push(
+    "Audio call across multiple tabs: only accepting tab connects, actual WebRTC and hang-up",
+  );
   await a
     .getByRole("button", { name: "Video qo'ng'iroq", exact: true })
     .click();
@@ -376,8 +386,13 @@ try {
     .filter({ hasText: "Qo'ng'iroq ulandi" })
     .waitFor({ timeout: 25000 });
   assert((await a.locator("video").count()) === 2);
-  await a.getByRole("button", { name: "Yakunlash", exact: true }).click();
-  report.push("Video call with actual fake-device video tracks");
+  // Closing the accepted tab ends the call even with another user tab online.
+  await b.close();
+  await a.getByRole("dialog").waitFor({ state: "hidden" });
+  report.push(
+    "Video call with actual media tracks and accepted-tab disconnect cleanup",
+  );
+  await extraTab.close();
   // Exercise pages and mobile overflow, including dark mode.
   for (const route of ["letters", "orders"]) {
     await a.goto("http://127.0.0.1:5174/" + route);

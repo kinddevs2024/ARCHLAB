@@ -49,6 +49,19 @@ export default function Tasks() {
       .then(({ data }) => setProjects(data.data))
       .catch(() => {});
   }, []);
+  const selectedProject = projects.find((p) => p.id === form.project);
+  const assignees = people.filter(
+    (u) =>
+      !form.project ||
+      ["Owner", "Admin"].includes(u.status) ||
+      [
+        ...(selectedProject?.assignedTo || []),
+        selectedProject?.helper,
+        selectedProject?.master,
+      ]
+        .filter(Boolean)
+        .some((id) => idOf(id) === u.id),
+  );
   const edit = (item) => {
     setEditing(item?.id || null);
     setForm(
@@ -268,9 +281,10 @@ export default function Tasks() {
               <div className="form-columns">
                 <Select
                   label="Loyiha"
+                  disabled={!!editing}
                   value={form.project}
                   onChange={(e) =>
-                    setForm({ ...form, project: e.target.value })
+                    setForm({ ...form, project: e.target.value, assignee: "" })
                   }
                 >
                   <option value="">Tanlang</option>
@@ -288,7 +302,7 @@ export default function Tasks() {
                   }
                 >
                   <option value="">Tanlang</option>
-                  {people.map((u) => (
+                  {assignees.map((u) => (
                     <option value={u.id} key={u.id}>
                       {u.name} {u.surname}
                     </option>

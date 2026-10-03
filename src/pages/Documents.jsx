@@ -352,6 +352,7 @@ export default function Documents({ type, project, embedded = false }) {
           {!project && (
             <Select
               label="Loyiha"
+              disabled={!!editing}
               value={form.project}
               onChange={(e) => setForm({ ...form, project: e.target.value })}
             >

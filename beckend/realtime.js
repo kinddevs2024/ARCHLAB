@@ -65,6 +65,7 @@ export function attachRealtime(server) {
           call = {
             id,
             from: user.id,
+            fromSocket: socket.id,
             to: target,
             conversation: String(chat._id),
             video: payload.video === true,
@@ -72,7 +73,12 @@ export function attachRealtime(server) {
           };
         calls.set(id, call);
         io.to(`user:${target}`).emit("call:incoming", {
-          ...call,
+          id,
+          from: call.from,
+          to: call.to,
+          conversation: call.conversation,
+          video: call.video,
+          at: call.at,
           caller: { id: user.id, name: user.name, surname: user.surname },
         });
         ack({ ok: true, id });
@@ -94,8 +100,12 @@ export function attachRealtime(server) {
       if (!c || c.to !== user.id || c.accepted) return ack({ ok: false });
       try {
         await conversationFor(socket.request.user, c.conversation);
+        if (calls.get(id) !== c || c.accepted || !socket.connected)
+          return ack({ ok: false });
         c.accepted = true;
-        io.to(`user:${c.from}`).emit("call:accepted", {
+        c.toSocket = socket.id;
+        socket.to(`user:${c.to}`).emit("call:answered_elsewhere", { id });
+        io.to(c.fromSocket).emit("call:accepted", {
           id,
           target: c.to,
           video: c.video,
@@ -108,17 +118,24 @@ export function attachRealtime(server) {
     socket.on("call:signal", (payload) => {
       const { id, signal } = payload || {};
       const c = calls.get(id);
-      if (!c || !c.accepted || ![c.from, c.to].includes(user.id)) return;
+      if (!c || !c.accepted || ![c.fromSocket, c.toSocket].includes(socket.id))
+        return;
       if (!signal || typeof signal !== "object") return;
-      io.to(`user:${c.from === user.id ? c.to : c.from}`).emit("call:signal", {
-        id,
-        signal,
-      });
+      io.to(c.fromSocket === socket.id ? c.toSocket : c.fromSocket).emit(
+        "call:signal",
+        {
+          id,
+          signal,
+        },
+      );
     });
     socket.on("call:end", (payload) => {
       const id = payload?.id;
       const c = calls.get(id);
       if (!c || ![c.from, c.to].includes(user.id)) return;
+      if (c.accepted && ![c.fromSocket, c.toSocket].includes(socket.id)) return;
+      if (!c.accepted && c.from === user.id && c.fromSocket !== socket.id)
+        return;
       io.to(`user:${c.from}`).to(`user:${c.to}`).emit("call:ended", { id });
       calls.delete(id);
     });
@@ -126,16 +143,17 @@ export function attachRealtime(server) {
       clearInterval(revalidate);
       const count = (onlineUsers.get(user.id) || 1) - 1;
       if (count) onlineUsers.set(user.id, count);
-      else {
-        onlineUsers.delete(user.id);
-        for (const [id, c] of calls)
-          if ([c.from, c.to].includes(user.id)) {
-            io.to(`user:${c.from}`)
-              .to(`user:${c.to}`)
-              .emit("call:ended", { id, reason: "Aloqa uzildi" });
-            calls.delete(id);
-          }
-      }
+      else onlineUsers.delete(user.id);
+      for (const [id, c] of calls)
+        if (
+          [c.fromSocket, c.toSocket].includes(socket.id) ||
+          (!count && c.to === user.id)
+        ) {
+          io.to(`user:${c.from}`)
+            .to(`user:${c.to}`)
+            .emit("call:ended", { id, reason: "Aloqa uzildi" });
+          calls.delete(id);
+        }
     });
   });
 }
