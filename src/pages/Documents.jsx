@@ -7,6 +7,7 @@ import { Button } from "../components/Button";
 import { Input, Select, Textarea } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { Table } from "../components/Table";
+import { RecordPreview } from "../components/RecordPreview";
 import { FileArchiveModal } from "../components/FileArchiveModal";
 import {
   Notice,
@@ -58,7 +59,7 @@ const base = {
 export default function Documents({ type, project, embedded = false }) {
   const conf = configs[type],
     { hasRole } = useAuth(),
-    [params] = useSearchParams(),
+    [params, setParams] = useSearchParams(),
     [year, setYear] = useState(""),
     [search, setSearch] = useState(""),
     [sort, setSort] = useState("desc"),
@@ -93,14 +94,19 @@ export default function Documents({ type, project, embedded = false }) {
         .then(({ data }) => setProjects(data.data))
         .catch(() => {});
   }, [project]);
+  const recordId = params.get("record");
   useEffect(() => {
-    const id = params.get("record");
-    if (id)
-      api
-        .get(`/api/${type}/${id}`)
-        .then(({ data }) => setFocused(data))
-        .catch((e) => setError(apiMessage(e)));
-  }, [type, params]);
+    if (!recordId) return;
+    const controller = new AbortController();
+    api
+      .get(`/api/${type}/${recordId}`, { signal: controller.signal })
+      .then(({ data }) => setFocused(data))
+      .catch((e) => {
+        if (e.code !== "ERR_CANCELED") setError(apiMessage(e));
+      });
+    return () => controller.abort();
+  }, [type, recordId]);
+
   const create = () => {
     setEditing(null);
     setError("");
@@ -271,7 +277,7 @@ export default function Documents({ type, project, embedded = false }) {
               rows={collection.rows}
               empty={`${conf.title} hali yo'q`}
               renderRow={(item, i) => (
-                <tr key={item.id} className={i === 0 ? "selected" : ""}>
+                <tr key={item.id} className="data-row">
                   {type !== "orders" && (
                     <td>{(collection.page - 1) * 20 + i + 1}</td>
                   )}
@@ -280,7 +286,7 @@ export default function Documents({ type, project, embedded = false }) {
                   </td>
                   <td>
                     <button
-                      className="text-left"
+                      className="record-link"
                       onClick={() => setFocused(item)}
                     >
                       {item.title}
@@ -311,7 +317,12 @@ export default function Documents({ type, project, embedded = false }) {
                     <RowActions
                       onEdit={canWrite && !trash ? () => edit(item) : null}
                       onArchive={
-                        canWrite && !trash ? () => setRemove(item) : null
+                        canWrite && !trash
+                          ? () => {
+                              setError("");
+                              setRemove(item);
+                            }
+                          : null
                       }
                       onRestore={
                         canWrite && trash
@@ -338,6 +349,7 @@ export default function Documents({ type, project, embedded = false }) {
       )}
       <Modal
         open={open}
+        dismissible={!busy}
         title={`${conf.singular} ${editing ? "tahrirlash" : "yaratish"}`}
         onClose={() => setOpen(false)}
       >
@@ -454,39 +466,49 @@ export default function Documents({ type, project, embedded = false }) {
           </Button>
         </form>
       </Modal>
-      <Modal
-        open={!!focused}
-        title={focused?.title || "Ma'lumot"}
-        onClose={() => setFocused(null)}
-      >
-        <div className="space-y-4">
-          <p>
-            {focused?.customerName} {focused?.customerPhone}
-          </p>
-          <p>{focused?.notes || focused?.description}</p>
-          <p>{dateLabel(focused?.[conf.date])}</p>
-          {conf.finance && (
-            <p>
-              Dog summa: {amountLabel(focused?.amount)} · Avans:{" "}
-              {amountLabel(focused?.advance)}
-            </p>
-          )}
-          {canWrite && (
-            <Button
-              onClick={() => {
+      <RecordPreview
+        item={focused}
+        onClose={() => {
+          setFocused(null);
+          const next = new URLSearchParams(params);
+          next.delete("record");
+          setParams(next, { replace: true });
+        }}
+        fields={[
+          ["Loyiha", focused?.project?.title],
+          ["Sana", focused ? dateLabel(focused[conf.date]) : null],
+          ["Buyurtmachi", focused?.customerName],
+          ["Telefon", focused?.customerPhone],
+          ...(conf.finance
+            ? [
+                ["Dog summa", amountLabel(focused?.amount)],
+                ["Avans", amountLabel(focused?.advance)],
+                ["Jami to'langan", amountLabel(focused?.totalPaid)],
+              ]
+            : []),
+          ["Izoh", focused?.notes || focused?.description],
+        ]}
+        onEdit={
+          canWrite && !trash
+            ? () => {
                 edit(focused);
                 setFocused(null);
-              }}
-            >
-              Tahrirlash
-            </Button>
-          )}
-        </div>
-      </Modal>
+                const next = new URLSearchParams(params);
+                next.delete("record");
+                setParams(next, { replace: true });
+              }
+            : undefined
+        }
+      />
       <ConfirmAction
+        itemLabel={remove?.title || remove?.originalName}
+        error={error}
         open={!!remove}
         busy={busy}
-        onClose={() => setRemove(null)}
+        onClose={() => {
+          setError("");
+          setRemove(null);
+        }}
         onConfirm={archiveItem}
       />
       <FileArchiveModal

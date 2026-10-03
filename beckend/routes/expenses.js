@@ -19,7 +19,7 @@ export const expensesRouter = resourceRouter({
     type: "Expense",
     entity: "expenses",
     dateField: "date",
-    fields: ["title"],
+    fields: ["title", "description", "notes"],
     populate: [["project", "title category"]],
     project: false,
     finance: true,

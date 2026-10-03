@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { api, apiMessage } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/Button";
 import { Input, Select, Textarea } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { Table } from "../components/Table";
+import { RecordPreview } from "../components/RecordPreview";
 import { StatusBadge } from "../components/StatusBadge";
 import { FileArchiveModal } from "../components/FileArchiveModal";
 import {
@@ -15,7 +21,7 @@ import {
   RowActions,
   ConfirmAction,
 } from "../components/Workspace";
-import { useCollection, dateLabel } from "../api/workspace";
+import { useCollection, dateLabel, idOf } from "../api/workspace";
 import Documents from "./Documents";
 const defaults = [
   "Firmaga xat",
@@ -32,6 +38,8 @@ const defaults = [
 export default function ProjectDetail() {
   const { id, folderId } = useParams(),
     navigate = useNavigate(),
+    [params, setParams] = useSearchParams(),
+    [viewing, setViewing] = useState(null),
     { hasRole } = useAuth(),
     [project, setProject] = useState(null),
     [parent, setParent] = useState(null),
@@ -68,6 +76,37 @@ export default function ProjectDetail() {
         .catch((e) => setError(apiMessage(e)));
     else setParent(null);
   }, [id, folderId]);
+  const previewId = params.get("folder");
+  useEffect(() => {
+    if (!previewId) return;
+    const controller = new AbortController();
+    api
+      .get(`/api/project-folders/${previewId}`, { signal: controller.signal })
+      .then(({ data }) => setViewing(data))
+      .catch((e) => {
+        if (e.code !== "ERR_CANCELED") setError(apiMessage(e));
+      });
+    return () => controller.abort();
+  }, [previewId]);
+  const closePreview = () => {
+    setViewing(null);
+    if (previewId) {
+      const next = new URLSearchParams(params);
+      next.delete("folder");
+      setParams(next, { replace: true });
+    }
+  };
+  const editFolder = (folder) => {
+    setEditing(folder.id);
+    setForm({
+      title: folder.title,
+      status: folder.status,
+      description: folder.description || "",
+      contactPhone: folder.contactPhone || "",
+    });
+    setError("");
+    setOpen(true);
+  };
   const create = () => {
     setEditing(null);
     setForm({ title: "", status: "new", description: "", contactPhone: "" });
@@ -227,8 +266,8 @@ export default function ProjectDetail() {
               }
               rows={folders.rows}
               empty="Bu papka ichida papkalar hali yo'q"
-              renderRow={(folder, i) => (
-                <tr key={folder.id} className={i === 0 ? "selected" : ""}>
+              renderRow={(folder) => (
+                <tr key={folder.id} className="data-row">
                   {!folderId && (
                     <td>
                       <StatusBadge value={folder.status} />
@@ -237,15 +276,10 @@ export default function ProjectDetail() {
                   <td>
                     <button
                       className="folder-name"
-                      disabled={trash}
-                      onClick={() =>
-                        navigate(`/projects/${id}/folders/${folder.id}`)
-                      }
+                      onClick={() => setViewing(folder)}
                     >
                       <span>›</span>
-                      <FigmaIcon
-                        name={i === 0 ? "imgFoldrIcon" : "imgFolderIcon"}
-                      />
+                      <FigmaIcon name="imgFolderIcon" />
                       {folder.title}
                     </button>
                   </td>
@@ -276,17 +310,7 @@ export default function ProjectDetail() {
                     <RowActions
                       onEdit={
                         !trash && hasRole("Manager")
-                          ? () => {
-                              setEditing(folder.id);
-                              setForm({
-                                title: folder.title,
-                                status: folder.status,
-                                description: folder.description || "",
-                                contactPhone: folder.contactPhone || "",
-                              });
-                              setError("");
-                              setOpen(true);
-                            }
+                          ? () => editFolder(folder)
                           : null
                       }
                     />
@@ -295,7 +319,10 @@ export default function ProjectDetail() {
                     <RowActions
                       onArchive={
                         !trash && hasRole("Manager")
-                          ? () => setRemove(folder)
+                          ? () => {
+                              setError("");
+                              setRemove(folder);
+                            }
                           : null
                       }
                       onRestore={
@@ -339,8 +366,39 @@ export default function ProjectDetail() {
           <FilesInFolder project={id} folder={folderId} />
         </>
       )}
+      <RecordPreview
+        item={viewing}
+        onClose={closePreview}
+        fields={[
+          ["Loyiha", project?.title],
+          ["Telefon", viewing?.contactPhone || project?.customerPhone],
+          ["Sana", viewing?.date ? dateLabel(viewing.date) : null],
+          ["Izoh", viewing?.description],
+        ]}
+        onEdit={
+          viewing && !trash && hasRole("Manager")
+            ? () => {
+                const folder = viewing;
+                closePreview();
+                editFolder(folder);
+              }
+            : undefined
+        }
+        onWorkspace={
+          viewing && !trash
+            ? () => {
+                const folder = viewing;
+                closePreview();
+                navigate(
+                  `/projects/${idOf(folder.project) || id}/folders/${folder.id}`,
+                );
+              }
+            : undefined
+        }
+      />
       <Modal
         open={open}
+        dismissible={!busy}
         title={editing ? "Papkani tahrirlash" : "Papka yaratish"}
         onClose={() => setOpen(false)}
       >
@@ -379,9 +437,14 @@ export default function ProjectDetail() {
         </form>
       </Modal>
       <ConfirmAction
+        itemLabel={remove?.title || remove?.originalName}
+        error={error}
         open={!!remove}
         busy={busy}
-        onClose={() => setRemove(null)}
+        onClose={() => {
+          setError("");
+          setRemove(null);
+        }}
         onConfirm={archiveFolder}
       />
       <FileArchiveModal

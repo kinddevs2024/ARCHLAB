@@ -21,7 +21,7 @@ export const lettersRouter = resourceRouter({
     type: "Letter",
     entity: "letters",
     dateField: "date",
-    fields: ["title", "customerName"],
+    fields: ["title", "customerName", "customerPhone", "description", "notes"],
     populate: [["project", "title category"]],
     project: false,
     finance: false,

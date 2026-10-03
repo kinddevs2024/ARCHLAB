@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 export default function Settings() {
   const avatar = useRef(null),
     { user, updateUser, hasRole } = useAuth(),
-    { theme, setTheme } = useOutletContext(),
+    { theme, changeTheme, themeBusy } = useOutletContext(),
     [profile, setProfile] = useState({
       name: user.name || "",
       surname: user.surname || "",
@@ -67,18 +67,6 @@ export default function Settings() {
       "Parol yangilandi. Boshqa sessiyalar yopildi.",
     );
   };
-  const preferences = (next) =>
-    act(
-      "theme",
-      async () => {
-        const { data } = await api.patch("/api/profile/preferences", {
-          theme: next,
-        });
-        updateUser(data.user);
-        setTheme(next);
-      },
-      "Shaxsiy sozlamalar saqlandi",
-    );
   const upload = (e) => {
     const file = e.target.files[0];
     e.target.value = "";
@@ -219,8 +207,8 @@ export default function Settings() {
             <Select
               label="Tema"
               value={theme}
-              disabled={!!busy}
-              onChange={(e) => preferences(e.target.value)}
+              disabled={!!busy || themeBusy}
+              onChange={(e) => changeTheme(e.target.value)}
             >
               <option value="light">Yorug'</option>
               <option value="dark">Qorong'i</option>

@@ -42,7 +42,14 @@ export const projectsRouter = resourceRouter({
     type: "Project",
     entity: "projects",
     dateField: "date",
-    fields: ["title", "company", "objectName", "customerName"],
+    fields: [
+      "title",
+      "company",
+      "objectName",
+      "objectAddress",
+      "customerName",
+      "customerPhone",
+    ],
     populate: [
       ["assignedTo", "name surname email status"],
       ["helper", "name surname"],

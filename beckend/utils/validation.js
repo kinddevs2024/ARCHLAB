@@ -24,6 +24,21 @@ export const literalSearch = (value) =>
       .replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
     "i",
   );
+// Every word can match a different field, while all regular-expression characters remain literal.
+export const searchFilter = (value, fields) => {
+  const words = String(value || "")
+    .normalize("NFKC")
+    .trim()
+    .slice(0, 120)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 8);
+  return {
+    $and: words.map((word) => ({
+      $or: fields.map((field) => ({ [field]: literalSearch(word) })),
+    })),
+  };
+};
 export const requireId = (id) => {
   if (!mongoose.isValidObjectId(id) || !/^[a-f\d]{24}$/i.test(String(id)))
     throw badRequest("ID noto'g'ri");

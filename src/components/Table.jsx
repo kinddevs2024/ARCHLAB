@@ -5,7 +5,15 @@ export function Table({
   empty = "Ma'lumot topilmadi",
 }) {
   return (
-    <div className="table-scroll">
+    <div
+      className="table-scroll"
+      role="region"
+      aria-label="Ma’lumotlar jadvali"
+      tabIndex={0}
+    >
+      <p className="table-mobile-hint">
+        Barcha ustunlar uchun jadvalni yon tomonga suring.
+      </p>
       <table className="workspace-table">
         <thead>
           <tr>

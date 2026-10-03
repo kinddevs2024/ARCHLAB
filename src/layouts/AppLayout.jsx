@@ -1,13 +1,10 @@
-import {
-  Link,
-  Navigate,
-  Outlet,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
-import { useEffect, useState } from "react";
-import { FaChartPie, FaTasks, FaFolderOpen } from "react-icons/fa";
-import { api } from "../api/client";
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { FaMoon, FaSun } from "react-icons/fa";
+import { GlobalSearch } from "../components/GlobalSearch";
+import { applyTheme, readTheme } from "../api/theme";
+import { FaChartPie, FaTasks, FaFolderOpen, FaReceipt } from "react-icons/fa";
+import { api, apiMessage } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { AuthImage } from "../components/AuthImage";
 import { FigmaIcon } from "../components/Workspace";
@@ -26,6 +23,7 @@ const items = [
   ["/projects/control", "Tashqi nazorat", "imgFrame"],
   ["/projects/render", "Rendr", "imgFrame3"],
   ["/contracts", "Shartnomalar", "imgFrame", "Manager"],
+  ["/expenses", "Xarajatlar", null, "Manager"],
   ["/letters", "Xatlar", "imgVector"],
   ["/orders", "Buyruqlar", "imgFrame"],
   ["/users", "Foydalanuvchilar", "img3User", "Admin"],
@@ -36,52 +34,60 @@ const items = [
   ["/dashboard", "Dashboard", null],
 ];
 export function AppLayout() {
-  const { user, loading, logout, hasRole } = useAuth(),
+  const { user, loading, logout, hasRole, updateUser } = useAuth(),
     location = useLocation(),
-    navigate = useNavigate(),
     [collapsed, setCollapsed] = useState(false),
     [mobileOpen, setMobileOpen] = useState(false),
-    [theme, setTheme] = useState(
-      () => localStorage.getItem("theme") || "system",
+    [theme, setTheme] = useState(readTheme),
+    [effectiveDark, setEffectiveDark] = useState(
+      () => matchMedia("(prefers-color-scheme: dark)").matches,
     ),
-    [query, setQuery] = useState(""),
-    [results, setResults] = useState([]),
+    [themeBusy, setThemeBusy] = useState(false),
+    [themeError, setThemeError] = useState(""),
+    themeSaving = useRef(false),
     [unread, setUnread] = useState(0);
   useEffect(() => setMobileOpen(false), [location.pathname]);
-  useEffect(() => {
-    const media = matchMedia("(prefers-color-scheme: dark)"),
-      apply = () =>
-        document.documentElement.classList.toggle(
-          "dark",
-          theme === "dark" || (theme === "system" && media.matches),
-        );
-    apply();
-    media.addEventListener("change", apply);
-    localStorage.setItem("theme", theme);
-    return () => media.removeEventListener("change", apply);
+  useLayoutEffect(() => {
+    applyTheme(theme);
+    setEffectiveDark(document.documentElement.classList.contains("dark"));
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => {
+      applyTheme(theme);
+      setEffectiveDark(document.documentElement.classList.contains("dark"));
+    };
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
   }, [theme]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (user?.preferences?.theme) setTheme(user.preferences.theme);
   }, [user?.preferences?.theme]);
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-    const c = new AbortController(),
-      timer = setTimeout(
-        () =>
-          api
-            .get("/api/search", { params: { q: query }, signal: c.signal })
-            .then(({ data }) => setResults(data.data))
-            .catch(() => {}),
-        250,
-      );
-    return () => {
-      clearTimeout(timer);
-      c.abort();
+    const sync = (e) => {
+      if (e.key === "theme" && !themeSaving.current) setTheme(readTheme());
     };
-  }, [query]);
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
+  const changeTheme = async (next) => {
+    if (themeSaving.current || next === theme) return;
+    const previous = theme;
+    themeSaving.current = true;
+    setThemeBusy(true);
+    setThemeError("");
+    setTheme(next);
+    try {
+      const { data } = await api.patch("/api/profile/preferences", {
+        theme: next,
+      });
+      updateUser(data.user);
+    } catch (e) {
+      setTheme(previous);
+      setThemeError(apiMessage(e));
+    } finally {
+      themeSaving.current = false;
+      setThemeBusy(false);
+    }
+  };
   useEffect(() => {
     if (!user) return;
     const refresh = () =>
@@ -159,6 +165,8 @@ export function AppLayout() {
                           <FigmaIcon name={icon} />
                         )}
                       </span>
+                    ) : to === "/expenses" ? (
+                      <FaReceipt />
                     ) : to === "/tasks" ? (
                       <FaTasks />
                     ) : to === "/dashboard" ? (
@@ -190,35 +198,28 @@ export function AppLayout() {
             >
               <FigmaIcon name="imgFrame461" />
             </button>
-            <div className="header-search">
-              <div className="header-search-field">
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Qidirish"
-                  aria-label="Umumiy qidiruv"
-                />
-                <FigmaIcon name="imgSearch" />
-              </div>
-              {results.length > 0 && (
-                <div className="search-results">
-                  {results.map((r) => (
-                    <button
-                      key={`${r.type}-${r.id}`}
-                      onClick={() => {
-                        navigate(r.href);
-                        setQuery("");
-                        setResults([]);
-                      }}
-                    >
-                      {r.title}
-                      <small className="block text-gray-400">{r.type}</small>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <GlobalSearch />
             <div className="header-controls">
+              <button
+                type="button"
+                className="icon-button theme-toggle"
+                disabled={themeBusy}
+                aria-label={
+                  effectiveDark
+                    ? "Yorug' rejimga o'tish"
+                    : "Qorong'i rejimga o'tish"
+                }
+                onClick={() =>
+                  changeTheme(
+                    document.documentElement.classList.contains("dark")
+                      ? "light"
+                      : "dark",
+                  )
+                }
+              >
+                <FaSun className="theme-sun" />
+                <FaMoon className="theme-moon" />
+              </button>
               <Link
                 to="/notifications"
                 className="icon-button relative"
@@ -244,10 +245,22 @@ export function AppLayout() {
               </Link>
             </div>
           </header>
+          {themeError && (
+            <div role="alert" className="theme-error">
+              {themeError}
+              <button
+                onClick={() => setThemeError("")}
+                aria-label="Xabarni yopish"
+              >
+                ×
+              </button>
+            </div>
+          )}
           <div
+            key={location.pathname}
             className={`workspace-content ${location.pathname === "/chat" ? "chat-content" : ""}`}
           >
-            <Outlet context={{ theme, setTheme }} />
+            <Outlet context={{ theme, changeTheme, themeBusy }} />
           </div>
         </main>
       </div>

@@ -5,6 +5,7 @@ import {
   FaPen,
   FaTrash,
   FaUndo,
+  FaArchive,
 } from "react-icons/fa";
 import { Button } from "./Button";
 import { Modal } from "./Modal";
@@ -86,23 +87,33 @@ export function YearFilter({ value, onChange }) {
 }
 export function ConfirmAction({
   open,
-  title = "Arxivlash",
+  title = "Yozuvni arxivlash?",
+  itemLabel,
+  error,
   onClose,
   onConfirm,
   busy,
 }) {
   return (
-    <Modal open={open} title={title} onClose={onClose}>
-      <p className="mb-5">
-        Yozuv arxivga o'tkaziladi. Keyin uni tiklash mumkin.
-      </p>
-      <div className="flex justify-end gap-3">
-        <Button variant="secondary" onClick={onClose}>
-          Bekor qilish
-        </Button>
-        <Button disabled={busy} onClick={onConfirm}>
-          {busy ? "Saqlanmoqda..." : "Tasdiqlash"}
-        </Button>
+    <Modal open={open} title={title} onClose={onClose} dismissible={!busy}>
+      <div className="confirm-content">
+        <span className="confirm-symbol">
+          <FaArchive />
+        </span>
+        {itemLabel && <strong className="confirm-record">{itemLabel}</strong>}
+        <p>
+          Yozuv faol ro'yxatdan olib tashlanadi. Uni keyin arxivdan tiklash
+          mumkin.
+        </p>
+        <Notice error={error} />
+        <div className="confirm-actions">
+          <Button variant="secondary" onClick={onClose} disabled={busy}>
+            Bekor qilish
+          </Button>
+          <Button variant="danger" disabled={busy} onClick={onConfirm}>
+            {busy ? "Arxivlanmoqda..." : "Arxivlash"}
+          </Button>
+        </div>
       </div>
     </Modal>
   );
@@ -111,13 +122,19 @@ export function RowActions({ onEdit, onArchive, onRestore }) {
   return (
     <div className="row-actions">
       {onEdit && (
-        <button className="row-edit" aria-label="Tahrirlash" onClick={onEdit}>
+        <button
+          className="row-edit"
+          title="Tahrirlash"
+          aria-label="Tahrirlash"
+          onClick={onEdit}
+        >
           <FaPen />
         </button>
       )}
       {onArchive && (
         <button
           className="row-delete"
+          title="Arxivlash"
           aria-label="Arxivlash"
           onClick={onArchive}
         >
@@ -125,7 +142,12 @@ export function RowActions({ onEdit, onArchive, onRestore }) {
         </button>
       )}
       {onRestore && (
-        <button className="row-edit" aria-label="Tiklash" onClick={onRestore}>
+        <button
+          className="row-edit"
+          title="Tiklash"
+          aria-label="Tiklash"
+          onClick={onRestore}
+        >
           <FaUndo />
         </button>
       )}

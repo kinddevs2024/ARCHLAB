@@ -22,7 +22,7 @@ export const ordersRouter = resourceRouter({
     type: "Order",
     entity: "orders",
     dateField: "issuedAt",
-    fields: ["title", "customerName"],
+    fields: ["title", "customerName", "customerPhone", "description", "notes"],
     populate: [
       ["project", "title category"],
       ["assignee", "name surname email status"],

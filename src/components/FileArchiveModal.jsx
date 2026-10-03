@@ -1,35 +1,29 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, apiMessage } from "../api/client";
 import { Button } from "./Button";
 import { Modal } from "./Modal";
 import { Pagination, Notice, RowActions, ConfirmAction } from "./Workspace";
 import { useCollection, downloadFile } from "../api/workspace";
-export function FileArchiveModal({
-  open,
-  onClose,
-  title,
-  entityType,
-  entityId,
-  kind = "document",
-  section = "archive",
-  project,
-  folder,
-  extension,
-}) {
-  return open && entityId ? (
+export function FileArchiveModal(props) {
+  const saved = useRef(props),
+    [present, setPresent] = useState(props.open);
+  if (props.open && props.entityId) saved.current = props;
+  useEffect(() => {
+    if (props.open) {
+      setPresent(true);
+      return;
+    }
+    const timer = setTimeout(() => setPresent(false), 180);
+    return () => clearTimeout(timer);
+  }, [props.open]);
+  if (!props.open && !present) return null;
+  const data = props.open ? props : saved.current;
+  return data.entityId ? (
     <ArchiveContent
-      {...{
-        open,
-        onClose,
-        title,
-        entityType,
-        entityId,
-        kind,
-        section,
-        project,
-        folder,
-        extension,
-      }}
+      key={`${data.entityType}-${data.entityId}-${data.extension || ""}`}
+      {...data}
+      open={props.open}
+      onClose={props.onClose}
     />
   ) : null;
 }
@@ -96,7 +90,13 @@ function ArchiveContent({
     }
   };
   return (
-    <Modal open={open} title={title || "Fayllar"} onClose={onClose} size="wide">
+    <Modal
+      open={open}
+      title={title || "Fayllar"}
+      onClose={onClose}
+      size="wide"
+      dismissible={!busy}
+    >
       <div className="mb-5 flex flex-wrap justify-between gap-3">
         <Button variant="ghost" onClick={() => setTrash((v) => !v)}>
           {trash ? "Faol fayllar" : "Arxiv"}
@@ -150,7 +150,14 @@ function ArchiveContent({
                   </button>
                 )}
                 <RowActions
-                  onArchive={!trash ? () => setRemove(file) : null}
+                  onArchive={
+                    !trash
+                      ? () => {
+                          setError("");
+                          setRemove(file);
+                        }
+                      : null
+                  }
                   onRestore={
                     trash
                       ? async () => {
@@ -176,9 +183,14 @@ function ArchiveContent({
       )}
       <Pagination {...collection} onChange={collection.setPage} />
       <ConfirmAction
+        itemLabel={remove?.title || remove?.originalName}
+        error={error}
         open={!!remove}
         busy={busy}
-        onClose={() => setRemove(null)}
+        onClose={() => {
+          setError("");
+          setRemove(null);
+        }}
         onConfirm={action}
       />
     </Modal>

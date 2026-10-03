@@ -15,7 +15,7 @@ import { badRequest, notFound, forbidden } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { writeAudit } from "../utils/audit.js";
 import { getPagination, paged } from "../utils/pagination.js";
-import { optionalId, literalSearch, requireId } from "../utils/validation.js";
+import { optionalId, searchFilter, requireId } from "../utils/validation.js";
 export const filesRouter = express.Router();
 filesRouter.use(authRequired);
 const filterFor = async (req) => {
@@ -40,7 +40,11 @@ const filterFor = async (req) => {
       req.query.extension === "doc"
         ? { $in: [".doc", ".docx"] }
         : "." + String(req.query.extension);
-  if (req.query.search) filter.originalName = literalSearch(req.query.search);
+  if (req.query.search)
+    filter.$and = [
+      ...(filter.$and || []),
+      searchFilter(req.query.search, ["originalName"]),
+    ];
   return filter;
 };
 filesRouter.get(

@@ -13,7 +13,7 @@ import { badRequest, forbidden, notFound } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   patchData,
-  literalSearch,
+  searchFilter,
   requireId,
   yearFilter,
 } from "../utils/validation.js";
@@ -153,13 +153,8 @@ export function resourceRouter({
       }
       if (req.query.year) filter[dateField] = yearFilter(req.query.year);
       if (req.query.search) {
-        const regex = literalSearch(req.query.search),
-          searched = { $or: fields.map((f) => ({ [f]: regex })) };
-        if (filter.$or) {
-          filter.$and = [...(filter.$and || []), { $or: filter.$or }, searched];
-          delete filter.$or;
-        } else if (filter.$and) filter.$and.push(searched);
-        else Object.assign(filter, searched);
+        const searched = searchFilter(req.query.search, fields);
+        filter.$and = [...(filter.$and || []), searched];
       }
       const sort = req.query.sort === "asc" ? 1 : -1;
       const [items, total] = await Promise.all([

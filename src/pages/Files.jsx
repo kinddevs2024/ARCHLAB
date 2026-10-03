@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { api, apiMessage } from "../api/client";
 import { Table } from "../components/Table";
+import { RecordPreview } from "../components/RecordPreview";
 import { Button } from "../components/Button";
 import {
   Notice,
@@ -11,7 +12,8 @@ import {
 } from "../components/Workspace";
 import { useCollection, downloadFile, dateLabel } from "../api/workspace";
 export default function Files() {
-  const [params] = useSearchParams(),
+  const [params, setParams] = useSearchParams(),
+    [viewing, setViewing] = useState(null),
     [search, setSearch] = useState(""),
     [trash, setTrash] = useState(false),
     [error, setError] = useState(""),
@@ -22,10 +24,26 @@ export default function Files() {
       trash,
       id: params.get("file") || undefined,
     });
+  const fileId = params.get("file");
   useEffect(() => {
-    const id = params.get("file");
-    if (id) setSearch("");
-  }, [params]);
+    if (!fileId) return;
+    const controller = new AbortController();
+    setSearch("");
+    api
+      .get(`/api/files/${fileId}`, { signal: controller.signal })
+      .then(({ data }) => setViewing(data))
+      .catch((e) => {
+        if (e.code !== "ERR_CANCELED") setError(apiMessage(e));
+      });
+    return () => controller.abort();
+  }, [fileId]);
+  const closePreview = () => {
+    setViewing(null);
+    const next = new URLSearchParams(params);
+    next.delete("record");
+    next.delete("file");
+    setParams(next, { replace: true });
+  };
   const archive = async () => {
     setBusy(true);
     try {
@@ -62,15 +80,15 @@ export default function Files() {
         <Table
           columns={["Nomi", "Tur", "Hajm", "Sana", "Yuklash", ""]}
           rows={c.rows}
-          renderRow={(f, i) => (
+          renderRow={(f) => (
             <tr
               key={f.id}
-              className={
-                f.id === params.get("file") || i === 0 ? "selected" : ""
-              }
+              className={f.id === params.get("file") ? "selected" : ""}
             >
               <td>
-                {f.originalName}
+                <button className="record-link" onClick={() => setViewing(f)}>
+                  {f.originalName}
+                </button>
                 {f.project && (
                   <Link
                     className="block text-xs opacity-60"
@@ -97,7 +115,14 @@ export default function Files() {
               </td>
               <td>
                 <RowActions
-                  onArchive={!trash ? () => setRemove(f) : null}
+                  onArchive={
+                    !trash
+                      ? () => {
+                          setError("");
+                          setRemove(f);
+                        }
+                      : null
+                  }
                   onRestore={
                     trash
                       ? async () => {
@@ -117,10 +142,32 @@ export default function Files() {
         />
       )}
       <Pagination {...c} onChange={c.setPage} />
+      <RecordPreview
+        item={viewing}
+        onClose={closePreview}
+        fields={[
+          ["Tur", viewing?.extension?.toUpperCase()],
+          [
+            "Hajm",
+            viewing ? `${(viewing.size / 1024 / 1024).toFixed(2)} MB` : null,
+          ],
+          ["Sana", viewing?.createdAt ? dateLabel(viewing.createdAt) : null],
+        ]}
+        onDownload={
+          viewing
+            ? () => downloadFile(viewing).catch((e) => setError(apiMessage(e)))
+            : undefined
+        }
+      />
       <ConfirmAction
+        itemLabel={remove?.title || remove?.originalName}
+        error={error}
         open={!!remove}
         busy={busy}
-        onClose={() => setRemove(null)}
+        onClose={() => {
+          setError("");
+          setRemove(null);
+        }}
         onConfirm={archive}
       />
     </div>

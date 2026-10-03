@@ -7,6 +7,7 @@ import { Button } from "../components/Button";
 import { Input, Select } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { Table } from "../components/Table";
+import { RecordPreview } from "../components/RecordPreview";
 import { AuthImage } from "../components/AuthImage";
 import {
   Pagination,
@@ -29,7 +30,8 @@ const empty = {
 };
 export default function Users() {
   const { user, hasRole } = useAuth(),
-    [params] = useSearchParams(),
+    [params, setParams] = useSearchParams(),
+    [viewing, setViewing] = useState(null),
     input = useRef(null),
     [search, setSearch] = useState(""),
     [form, setForm] = useState(empty),
@@ -56,19 +58,26 @@ export default function Users() {
     setError("");
     setOpen(true);
   };
+  const recordId = params.get("record");
   useEffect(() => {
-    const id = params.get("record");
-    if (id) {
-      api
-        .get(`/api/users/${id}`)
-        .then(({ data: item }) => {
-          setEditing(item.id);
-          setForm({ ...empty, ...item, password: "" });
-          setOpen(true);
-        })
-        .catch((e) => setError(apiMessage(e)));
-    }
-  }, [params]);
+    if (!recordId) return;
+    const controller = new AbortController();
+    api
+      .get(`/api/users/${recordId}`, { signal: controller.signal })
+      .then(({ data }) => setViewing(data))
+      .catch((e) => {
+        if (e.code !== "ERR_CANCELED") setError(apiMessage(e));
+      });
+    return () => controller.abort();
+  }, [recordId]);
+
+  const closePreview = () => {
+    setViewing(null);
+    const next = new URLSearchParams(params);
+    next.delete("record");
+    next.delete("file");
+    setParams(next, { replace: true });
+  };
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -134,8 +143,8 @@ export default function Users() {
             "",
           ]}
           rows={c.rows}
-          renderRow={(u, i) => (
-            <tr key={u.id} className={i === 0 ? "selected" : ""}>
+          renderRow={(u) => (
+            <tr key={u.id} className="data-row">
               <td>
                 <div className="flex items-center gap-3">
                   <AuthImage
@@ -143,7 +152,9 @@ export default function Users() {
                     alt=""
                     className="h-9 w-9 rounded-full object-cover"
                   />
-                  {u.name} {u.surname}
+                  <button className="record-link" onClick={() => setViewing(u)}>
+                    {u.name} {u.surname}
+                  </button>
                 </div>
               </td>
               <td>{u.position || "—"}</td>
@@ -165,9 +176,32 @@ export default function Users() {
         />
       )}
       <Pagination {...c} onChange={c.setPage} />
+      <RecordPreview
+        item={viewing}
+        title={[viewing?.name, viewing?.surname].filter(Boolean).join(" ")}
+        onClose={closePreview}
+        fields={[
+          ["Email", viewing?.email],
+          ["Telefon", viewing?.phone],
+          ["Lavozim", viewing?.position],
+          ["Manzil", viewing?.address],
+          ["Ruxsat", viewing?.status],
+          ["Holat", viewing?.active ? "Faol" : "Bloklangan"],
+        ]}
+        onEdit={
+          viewing && (user.status === "Owner" || viewing.status !== "Owner")
+            ? () => {
+                const item = viewing;
+                closePreview();
+                edit(item);
+              }
+            : undefined
+        }
+      />
       <Modal
         size="wide"
         open={open}
+        dismissible={!busy}
         title={editing ? "Xodimni tahrirlash" : "Xodim qo'shish"}
         onClose={() => setOpen(false)}
       >

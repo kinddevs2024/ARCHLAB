@@ -1,3 +1,4 @@
+import Documents from "./pages/Documents";
 import Tasks from "./pages/Tasks";
 import Files from "./pages/Files";
 import Dashboard from "./pages/Dashboard";
@@ -60,6 +61,7 @@ function App() {
           />
           <Route path="/projects/:id" element={<ProjectDetail />} />
           <Route path="/contracts" element={<Contracts />} />
+          <Route path="/expenses" element={<Documents type="expenses" />} />
           <Route path="/letters" element={<Letters />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/chat" element={<Chat />} />

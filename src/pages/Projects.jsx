@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, apiMessage } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/Button";
 import { Input, Select, Textarea } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { Table } from "../components/Table";
+import { RecordPreview } from "../components/RecordPreview";
 import { StatusBadge } from "../components/StatusBadge";
 import { FileArchiveModal } from "../components/FileArchiveModal";
 import {
@@ -44,6 +45,8 @@ const empty = {
 };
 export default function Projects({ title = "Loyihalar", category }) {
   const navigate = useNavigate(),
+    [params, setParams] = useSearchParams(),
+    [viewing, setViewing] = useState(null),
     { hasRole } = useAuth(),
     [year, setYear] = useState(""),
     [search, setSearch] = useState(""),
@@ -68,6 +71,26 @@ export default function Projects({ title = "Loyihalar", category }) {
       .then(({ data }) => setUsers(data.data))
       .catch(() => {});
   }, []);
+  const recordId = params.get("record");
+  useEffect(() => {
+    if (!recordId) return;
+    const controller = new AbortController();
+    api
+      .get(`/api/projects/${recordId}`, { signal: controller.signal })
+      .then(({ data }) => setViewing(data))
+      .catch((e) => {
+        if (e.code !== "ERR_CANCELED") setError(apiMessage(e));
+      });
+    return () => controller.abort();
+  }, [recordId]);
+  const closePreview = () => {
+    setViewing(null);
+    if (recordId) {
+      const next = new URLSearchParams(params);
+      next.delete("record");
+      setParams(next, { replace: true });
+    }
+  };
   const create = () => {
     setEditing(null);
     setForm({
@@ -169,20 +192,18 @@ export default function Projects({ title = "Loyihalar", category }) {
           ]}
           rows={collection.rows}
           empty="Hali loyiha yo'q"
-          renderRow={(item, i) => (
-            <tr key={item.id} className={i === 0 ? "selected" : ""}>
+          renderRow={(item) => (
+            <tr key={item.id} className="data-row">
               <td>
                 <StatusBadge value={item.status} />
               </td>
               <td>
                 <button
                   className="folder-name"
-                  onClick={() => navigate(`/projects/${item.id}`)}
+                  onClick={() => setViewing(item)}
                   disabled={trash}
                 >
-                  <FigmaIcon
-                    name={i === 0 ? "imgFoldrIcon" : "imgFolderIcon"}
-                  />
+                  <FigmaIcon name="imgFolderIcon" />
                   {item.company || item.title}
                 </button>
               </td>
@@ -205,7 +226,12 @@ export default function Projects({ title = "Loyihalar", category }) {
                     !trash && hasRole("Manager") ? () => edit(item) : null
                   }
                   onArchive={
-                    !trash && hasRole("Manager") ? () => setRemove(item) : null
+                    !trash && hasRole("Manager")
+                      ? () => {
+                          setError("");
+                          setRemove(item);
+                        }
+                      : null
                   }
                   onRestore={
                     trash
@@ -228,6 +254,7 @@ export default function Projects({ title = "Loyihalar", category }) {
       <Pagination {...collection} onChange={collection.setPage} />
       <Modal
         open={open}
+        dismissible={!busy}
         title={editing ? "Loyihani tahrirlash" : "Loyiha yaratish"}
         onClose={() => setOpen(false)}
       >
@@ -361,9 +388,45 @@ export default function Projects({ title = "Loyihalar", category }) {
           </Button>
         </form>
       </Modal>
+      <RecordPreview
+        item={viewing}
+        onClose={closePreview}
+        title={viewing?.company || viewing?.title}
+        fields={[
+          ["Loyiha nomi", viewing?.title],
+          ["Kompaniya", viewing?.company],
+          ["Obyekt", viewing?.objectName],
+          ["Manzil", viewing?.objectAddress],
+          ["Mijoz", viewing?.customerName],
+          ["Telefon", viewing?.customerPhone],
+          ["Sana", viewing?.date ? dateLabel(viewing.date) : null],
+          ["Izoh", viewing?.description],
+        ]}
+        onEdit={
+          hasRole("Manager") && !trash
+            ? () => {
+                const item = viewing;
+                closePreview();
+                edit(item);
+              }
+            : undefined
+        }
+        onWorkspace={
+          !trash
+            ? () => {
+                navigate(`/projects/${viewing.id}`);
+              }
+            : undefined
+        }
+      />
       <ConfirmAction
+        itemLabel={remove?.title || remove?.originalName}
+        error={error}
         open={!!remove}
-        onClose={() => setRemove(null)}
+        onClose={() => {
+          setError("");
+          setRemove(null);
+        }}
         onConfirm={action}
         busy={busy}
       />

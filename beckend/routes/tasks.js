@@ -19,7 +19,7 @@ export const tasksRouter = resourceRouter({
     type: "Task",
     entity: "tasks",
     dateField: "createdAt",
-    fields: ["title"],
+    fields: ["title", "description"],
     populate: [
       ["project", "title category"],
       ["assignee", "name surname email status"],

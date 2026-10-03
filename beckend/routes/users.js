@@ -1,5 +1,5 @@
 import { adminOnly } from "../middleware/access.js";
-import { patchData, literalSearch, requireId } from "../utils/validation.js";
+import { patchData, searchFilter, requireId } from "../utils/validation.js";
 import bcrypt from "bcryptjs";
 import express from "express";
 import { z } from "zod";
@@ -54,15 +54,19 @@ usersRouter.get(
     const { page, limit, skip } = getPagination(req.query);
     const filter = {};
     if (req.query.role) filter.status = req.query.role;
-    if (req.query.search) {
-      const search = literalSearch(req.query.search);
-      filter.$or = [
-        { name: search },
-        { surname: search },
-        { email: search },
-        { username: search },
-      ];
-    }
+    if (req.query.search)
+      Object.assign(
+        filter,
+        searchFilter(req.query.search, [
+          "name",
+          "surname",
+          "email",
+          "username",
+          "phone",
+          "position",
+          "address",
+        ]),
+      );
 
     const [items, total] = await Promise.all([
       User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),

@@ -7,6 +7,7 @@ import { Input, Select, Textarea } from "../components/Input";
 import { Button } from "../components/Button";
 import { Modal } from "../components/Modal";
 import { Table } from "../components/Table";
+import { RecordPreview } from "../components/RecordPreview";
 import { StatusBadge } from "../components/StatusBadge";
 import {
   Pagination,
@@ -27,7 +28,8 @@ const empty = {
 };
 export default function Tasks() {
   const { hasRole } = useAuth(),
-    [params] = useSearchParams(),
+    [params, setParams] = useSearchParams(),
+    [viewing, setViewing] = useState(null),
     [search, setSearch] = useState(""),
     [status, setStatus] = useState(""),
     [trash, setTrash] = useState(false),
@@ -78,24 +80,19 @@ export default function Tasks() {
     setError("");
     setOpen(true);
   };
+  const recordId = params.get("record");
   useEffect(() => {
-    const id = params.get("record");
-    if (id)
-      api
-        .get(`/api/tasks/${id}`)
-        .then(({ data }) => {
-          setEditing(data.id);
-          setForm({
-            ...empty,
-            ...data,
-            dueDate: data.dueDate?.slice(0, 10) || "",
-            project: idOf(data.project),
-            assignee: idOf(data.assignee),
-          });
-          setOpen(true);
-        })
-        .catch((e) => setError(apiMessage(e)));
-  }, [params]);
+    if (!recordId) return;
+    const controller = new AbortController();
+    api
+      .get(`/api/tasks/${recordId}`, { signal: controller.signal })
+      .then(({ data }) => setViewing(data))
+      .catch((e) => {
+        if (e.code !== "ERR_CANCELED") setError(apiMessage(e));
+      });
+    return () => controller.abort();
+  }, [recordId]);
+
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -112,6 +109,13 @@ export default function Tasks() {
     } finally {
       setBusy(false);
     }
+  };
+  const closePreview = () => {
+    setViewing(null);
+    const next = new URLSearchParams(params);
+    next.delete("record");
+    next.delete("file");
+    setParams(next, { replace: true });
   };
   const archive = async () => {
     setBusy(true);
@@ -195,9 +199,16 @@ export default function Tasks() {
               "",
             ]}
             rows={c.rows}
-            renderRow={(item, i) => (
-              <tr key={item.id} className={i === 0 ? "selected" : ""}>
-                <td>{item.title}</td>
+            renderRow={(item) => (
+              <tr key={item.id} className="data-row">
+                <td>
+                  <button
+                    className="record-link"
+                    onClick={() => setViewing(item)}
+                  >
+                    {item.title}
+                  </button>
+                </td>
                 <td>{item.project?.title || "—"}</td>
                 <td>{item.assignee?.name || "—"}</td>
                 <td>{item.priority}</td>
@@ -210,7 +221,10 @@ export default function Tasks() {
                     onEdit={!trash ? () => edit(item) : null}
                     onArchive={
                       !trash && hasRole("Manager")
-                        ? () => setRemove(item)
+                        ? () => {
+                            setError("");
+                            setRemove(item);
+                          }
                         : null
                     }
                     onRestore={
@@ -233,8 +247,37 @@ export default function Tasks() {
         )
       )}
       <Pagination {...c} onChange={c.setPage} />
+      <RecordPreview
+        item={viewing}
+        onClose={closePreview}
+        fields={[
+          ["Loyiha", viewing?.project?.title],
+          [
+            "Mas'ul",
+            [viewing?.assignee?.name, viewing?.assignee?.surname]
+              .filter(Boolean)
+              .join(" "),
+          ],
+          ["Ustuvorlik", viewing?.priority],
+          [
+            "Tugatish sanasi",
+            viewing?.dueDate ? dateLabel(viewing.dueDate) : null,
+          ],
+          ["Izoh", viewing?.description],
+        ]}
+        onEdit={
+          !trash
+            ? () => {
+                const item = viewing;
+                closePreview();
+                edit(item);
+              }
+            : undefined
+        }
+      />
       <Modal
         open={open}
+        dismissible={!busy}
         title={editing ? "Vazifani tahrirlash" : "Vazifa yaratish"}
         onClose={() => setOpen(false)}
       >
@@ -330,8 +373,13 @@ export default function Tasks() {
         </form>
       </Modal>
       <ConfirmAction
+        itemLabel={remove?.title || remove?.originalName}
+        error={error}
         open={!!remove}
-        onClose={() => setRemove(null)}
+        onClose={() => {
+          setError("");
+          setRemove(null);
+        }}
         onConfirm={archive}
         busy={busy}
       />

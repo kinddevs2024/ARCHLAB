@@ -52,6 +52,7 @@ const screenshot = async (page, name) => {
         (el) => el.getClientRects().length,
       ),
   );
+  await page.waitForTimeout(300);
   await page.screenshot({
     path: path.join(dir, name + ".png"),
     fullPage: true,
@@ -159,6 +160,10 @@ try {
   assert.equal(project.status, "done");
   report.push("Project creation from UI, assignments and Figma form");
   await a.getByRole("button", { name: "ARCH LAB loyiha", exact: true }).click();
+  await a
+    .getByRole("dialog")
+    .getByRole("button", { name: "Papkalar va hujjatlar", exact: true })
+    .click();
   await a.getByRole("heading", { name: stamp, exact: true }).waitFor();
   await screenshot(a, "folders-empty");
   // Folder tree and safe defaults work through API then appear in UI.
@@ -193,6 +198,10 @@ try {
   await a.getByRole("button", { name: /Eskiz/ }).waitFor();
   await screenshot(a, "folders");
   await a.getByRole("button", { name: /Eskiz/ }).click();
+  await a
+    .getByRole("dialog")
+    .getByRole("button", { name: "Papkalar va hujjatlar", exact: true })
+    .click();
   await a.getByRole("button", { name: /Fasad/ }).waitFor();
   await screenshot(a, "sketches");
   report.push("Nested folders, repeated default creation and cycle prevention");
