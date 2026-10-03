@@ -3,6 +3,8 @@ import { projectStatuses } from "../config.js";
 
 const projectSchema = new mongoose.Schema(
   {
+    deletedAt: { type: Date, default: null, index: true },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     title: { type: String, required: true, trim: true },
     company: { type: String, trim: true },
     objectName: { type: String, trim: true },
@@ -11,13 +13,20 @@ const projectSchema = new mongoose.Schema(
     customerPhone: { type: String, trim: true },
     contractAmount: { type: Number, default: 0 },
     category: { type: String, default: "general", trim: true },
-    status: { type: String, enum: projectStatuses, default: "new", index: true },
+    status: {
+      type: String,
+      enum: projectStatuses,
+      default: "new",
+      index: true,
+    },
     description: String,
     date: { type: Date, default: Date.now, index: true },
+    helper: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    master: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 projectSchema.methods.toPublic = function toPublic() {

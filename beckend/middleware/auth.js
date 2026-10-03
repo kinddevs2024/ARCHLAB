@@ -12,24 +12,36 @@ const rank = {
 
 export const authRequired = async (req, _res, next) => {
   try {
-    const cookie = (req.headers.cookie || "").split(";").map((part) => part.trim()).find((part) => part.startsWith("archlab_session="));
+    const cookie = (req.headers.cookie || "")
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith("archlab_session="));
     const token = cookie ? cookie.slice("archlab_session=".length) : null;
 
     if (!token) {
       throw new ApiError(401, "Avtorizatsiya kerak", "UNAUTHORIZED");
     }
 
-    const payload = jwt.verify(token, config.jwtSecret, { algorithms: ["HS256"] });
+    const payload = jwt.verify(token, config.jwtSecret, {
+      algorithms: ["HS256"],
+    });
     const user = await User.findById(payload.id).select("+sessionVersion");
 
     if (!user || !user.active || payload.version !== user.sessionVersion) {
-      throw new ApiError(401, "Profil topilmadi yoki bloklangan", "UNAUTHORIZED");
+      throw new ApiError(
+        401,
+        "Profil topilmadi yoki bloklangan",
+        "UNAUTHORIZED",
+      );
     }
 
     req.user = user.toPublic();
     next();
   } catch (error) {
-    if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError"
+    ) {
       next(new ApiError(401, "Sessiya tugagan. Qayta kiring", "UNAUTHORIZED"));
       return;
     }

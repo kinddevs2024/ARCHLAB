@@ -7,7 +7,7 @@ const conversationSchema = new mongoose.Schema(
     lastMessage: String,
     lastMessageAt: Date,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 conversationSchema.methods.toPublic = function toPublic() {

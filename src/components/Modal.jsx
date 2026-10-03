@@ -1,24 +1,86 @@
+import { useEffect, useRef, useId } from "react";
+import { createPortal } from "react-dom";
 import { FaTimes } from "react-icons/fa";
-
+const stack = [];
+let originalOverflow = "";
 export function Modal({ open, title, children, onClose, size = "normal" }) {
+  const ref = useRef(null),
+    close = useRef(onClose),
+    id = useId();
+  close.current = onClose;
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement;
+    if (!stack.length) {
+      originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+    stack.push(id);
+    ref.current?.focus();
+    const keys = (e) => {
+      if (stack.at(-1) !== id) return;
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        close.current();
+      }
+      if (e.key === "Tab") {
+        const els = [
+            ...ref.current.querySelectorAll(
+              'button,input,select,textarea,a[href],[tabindex="0"]',
+            ),
+          ].filter((x) => !x.disabled && x.getClientRects().length),
+          first = els[0],
+          last = els.at(-1);
+        if (!els.length) {
+          e.preventDefault();
+          return;
+        }
+        if (
+          e.shiftKey &&
+          (document.activeElement === first ||
+            document.activeElement === ref.current)
+        ) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", keys);
+    return () => {
+      document.removeEventListener("keydown", keys);
+      stack.splice(stack.indexOf(id), 1);
+      if (!stack.length) document.body.style.overflow = originalOverflow;
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [open, id]);
   if (!open) return null;
-  const width = size === "wide" ? "max-w-[760px]" : "max-w-[584px]";
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 backdrop-blur-[5px]">
-      <div className={`max-h-[90vh] w-full ${width} overflow-y-auto rounded-[20px] bg-white shadow-2xl dark:bg-[#171c22]`}>
-        <div className="flex items-center justify-between px-12 pb-4 pt-8">
-          <h2 className="text-[28px] font-extrabold leading-none text-black dark:text-white">{title}</h2>
+  return createPortal(
+    <div className="modal-backdrop">
+      <section
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={id}
+        tabIndex={-1}
+        className={`modal-panel ${size === "wide" ? "modal-wide" : ""}`}
+      >
+        <header className="modal-heading">
+          <h2 id={id}>{title}</h2>
           <button
-            className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#f5f7fb] text-xl text-[#111827] transition hover:bg-[#edf1f7] dark:bg-[#222a33] dark:text-white"
-            onClick={onClose}
             type="button"
+            className="icon-button"
+            aria-label="Yopish"
+            onClick={onClose}
           >
             <FaTimes />
           </button>
-        </div>
-        <div className="px-12 pb-8">{children}</div>
-      </div>
-    </div>
+        </header>
+        <div className="modal-body">{children}</div>
+      </section>
+    </div>,
+    document.body,
   );
 }

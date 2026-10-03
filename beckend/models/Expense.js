@@ -2,7 +2,13 @@ import mongoose from "mongoose";
 
 const expenseSchema = new mongoose.Schema(
   {
-    project: { type: mongoose.Schema.Types.ObjectId, ref: "Project", index: true },
+    deletedAt: { type: Date, default: null, index: true },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+      index: true,
+    },
     title: { type: String, required: true, trim: true },
     amount: { type: Number, default: 0 },
     advance: { type: Number, default: 0 },
@@ -12,7 +18,7 @@ const expenseSchema = new mongoose.Schema(
     notes: { type: String, default: "" },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 expenseSchema.methods.toPublic = function toPublic() {

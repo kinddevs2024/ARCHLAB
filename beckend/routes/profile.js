@@ -1,9 +1,15 @@
+import fs from "node:fs/promises";
+import crypto from "node:crypto";
+import sharp from "sharp";
+import jwt from "jsonwebtoken";
+import { config } from "../config.js";
+import { isAdmin } from "../middleware/access.js";
 import bcrypt from "bcryptjs";
 import express from "express";
 import path from "path";
 import { z } from "zod";
 import { authRequired } from "../middleware/auth.js";
-import { upload } from "../middleware/upload.js";
+import { avatarUpload } from "../middleware/upload.js";
 import { File } from "../models/File.js";
 import { User } from "../models/User.js";
 import { ApiError } from "../utils/apiError.js";
@@ -14,49 +20,125 @@ export const profileRouter = express.Router();
 
 profileRouter.use(authRequired);
 
-profileRouter.patch("/", asyncHandler(async (req, res) => {
-  const data = z.object({
-    name: z.string().trim().optional(),
-    surname: z.string().trim().optional(),
-    phone: z.string().trim().optional(),
-    address: z.string().trim().optional(),
-    username: z.string().trim().optional(),
-  }).parse(req.body);
-  const user = await User.findByIdAndUpdate(req.user.id, data, { new: true });
-  await writeAudit(req, "update", "Profile", req.user.id, { fields: Object.keys(data) });
-  res.json({ user: user.toPublic() });
-}));
+profileRouter.patch(
+  "/",
+  asyncHandler(async (req, res) => {
+    const data = z
+      .object({
+        name: z.string().trim().max(120).optional(),
+        surname: z.string().trim().max(120).optional(),
+        phone: z.string().trim().max(40).optional(),
+        address: z.string().trim().max(500).optional(),
+        username: z.string().trim().max(80).optional(),
+      })
+      .parse(req.body);
+    const user = await User.findByIdAndUpdate(req.user.id, data, {
+      returnDocument: "after",
+    });
+    await writeAudit(req, "update", "Profile", req.user.id, {
+      fields: Object.keys(data),
+    });
+    res.json({ user: user.toPublic() });
+  }),
+);
 
-profileRouter.patch("/password", asyncHandler(async (req, res) => {
-  const data = z.object({
-    currentPassword: z.string().min(1),
-    newPassword: z.string().min(12).max(72),
-  }).parse(req.body);
-  const user = await User.findById(req.user.id).select("+password +sessionVersion");
-  const ok = await bcrypt.compare(data.currentPassword, user.password);
-  if (!ok) throw new ApiError(400, "Hozirgi parol noto'g'ri", "BAD_PASSWORD");
-  user.password = await bcrypt.hash(data.newPassword, 10);
-  user.sessionVersion += 1;
-  await user.save();
-  await writeAudit(req, "password", "Profile", req.user.id);
-  res.json({ ok: true });
-}));
+profileRouter.patch(
+  "/password",
+  asyncHandler(async (req, res) => {
+    const data = z
+      .object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(12).max(72),
+      })
+      .parse(req.body);
+    const user = await User.findById(req.user.id).select(
+      "+password +sessionVersion",
+    );
+    const ok = await bcrypt.compare(data.currentPassword, user.password);
+    if (!ok) throw new ApiError(400, "Hozirgi parol noto'g'ri", "BAD_PASSWORD");
+    user.password = await bcrypt.hash(data.newPassword, 10);
+    user.sessionVersion += 1;
+    await user.save();
+    await writeAudit(req, "password", "Profile", req.user.id);
+    const token = jwt.sign(
+      { id: user._id.toString(), version: user.sessionVersion },
+      config.jwtSecret,
+      { expiresIn: "8h", algorithm: "HS256" },
+    );
+    res.cookie("archlab_session", token, {
+      httpOnly: true,
+      secure: config.nodeEnv === "production",
+      sameSite: "lax",
+      path: "/",
+    });
+    res.json({ ok: true });
+  }),
+);
 
-profileRouter.post("/avatar", upload.single("file"), asyncHandler(async (req, res) => {
-  const file = await File.create({
-    originalName: req.file.originalname,
-    storedName: req.file.filename,
-    path: req.file.path,
-    mimeType: req.file.mimetype,
-    extension: path.extname(req.file.originalname).toLowerCase(),
-    size: req.file.size,
-    kind: "avatar",
-    section: "avatars",
-    entityType: "users",
-    entityId: req.user.id,
-    uploadedBy: req.user.id,
-  });
-  const user = await User.findByIdAndUpdate(req.user.id, { avatar: `/api/files/${file._id}/download` }, { new: true });
-  await writeAudit(req, "avatar", "Profile", req.user.id, { file: file.originalName });
-  res.status(201).json({ user: user.toPublic(), file: file.toPublic() });
-}));
+profileRouter.patch(
+  "/preferences",
+  asyncHandler(async (req, res) => {
+    const data = z
+      .object({
+        theme: z.enum(["light", "dark", "system"]).optional(),
+        language: z.enum(["uz", "ru", "en"]).optional(),
+      })
+      .parse(req.body);
+    const user = await User.findById(req.user.id);
+    user.preferences = {
+      theme: user.preferences?.theme || "system",
+      language: user.preferences?.language || "uz",
+      ...data,
+    };
+    await user.save();
+    res.json({ user: user.toPublic() });
+  }),
+);
+profileRouter.post(
+  "/avatar",
+  avatarUpload.single("file"),
+  asyncHandler(async (req, res) => {
+    if (!req.file) throw new ApiError(400, "Rasmni tanlang");
+    let imagePath;
+    try {
+      const userId = req.body.userId || req.user.id;
+      if (userId !== req.user.id && !isAdmin(req.user))
+        throw new ApiError(403, "Ruxsat yo'q");
+      const target = await User.findById(userId);
+      if (!target) throw new ApiError(404, "Xodim topilmadi");
+      imagePath = path.join(config.uploadDir, crypto.randomUUID() + ".webp");
+      try {
+        await sharp(req.file.path, { limitInputPixels: 20000000 })
+          .rotate()
+          .resize(512, 512, { fit: "cover" })
+          .webp({ quality: 85 })
+          .toFile(imagePath);
+      } catch {
+        throw new ApiError(400, "Rasm formati noto'g'ri", "BAD_IMAGE");
+      }
+      const stat = await fs.stat(imagePath);
+      const file = await File.create({
+        originalName: "avatar.webp",
+        storedName: path.basename(imagePath),
+        path: imagePath,
+        mimeType: "image/webp",
+        extension: ".webp",
+        size: stat.size,
+        kind: "avatar",
+        section: "avatars",
+        entityType: "users",
+        entityId: userId,
+        uploadedBy: req.user.id,
+      });
+      target.avatar = `/api/files/${file._id}/download`;
+      await target.save();
+      await writeAudit(req, "avatar", "User", userId);
+      res.status(201).json({ user: target.toPublic(), file: file.toPublic() });
+    } catch (error) {
+      if (imagePath) await fs.unlink(imagePath).catch(() => {});
+      throw error;
+    } finally {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+  }),
+);

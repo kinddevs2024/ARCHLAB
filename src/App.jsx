@@ -1,3 +1,6 @@
+import Tasks from "./pages/Tasks";
+import Files from "./pages/Files";
+import Dashboard from "./pages/Dashboard";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { AppLayout } from "./layouts/AppLayout";
@@ -22,12 +25,39 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to="/projects" replace />} />
           <Route path="/projects" element={<Projects title="Loyihalar" />} />
-          <Route path="/projects/single" element={<Projects title="Yakka tartibdagi loyihalar" category="single" />} />
-          <Route path="/projects/interior" element={<Projects title="Interyer" category="interior" />} />
-          <Route path="/projects/tex-obs" element={<Projects title="Tex-obs" category="tex-obs" />} />
-          <Route path="/projects/laboratory" element={<Projects title="Laboratoriya" category="laboratory" />} />
-          <Route path="/projects/control" element={<Projects title="Tashqi nazorat" category="control" />} />
-          <Route path="/projects/render" element={<Projects title="Rendr" category="render" />} />
+          <Route
+            path="/projects/single"
+            element={
+              <Projects title="Yakka tartibdagi loyihalar" category="single" />
+            }
+          />
+          <Route
+            path="/projects/interior"
+            element={<Projects title="Interyer" category="interior" />}
+          />
+          <Route
+            path="/projects/tex-obs"
+            element={<Projects title="Tex-obs" category="tex-obs" />}
+          />
+          <Route
+            path="/projects/laboratory"
+            element={<Projects title="Laboratoriya" category="laboratory" />}
+          />
+          <Route
+            path="/projects/control"
+            element={<Projects title="Tashqi nazorat" category="control" />}
+          />
+          <Route
+            path="/projects/render"
+            element={<Projects title="Rendr" category="render" />}
+          />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/files" element={<Files />} />
+          <Route
+            path="/projects/:id/folders/:folderId"
+            element={<ProjectDetail />}
+          />
           <Route path="/projects/:id" element={<ProjectDetail />} />
           <Route path="/contracts" element={<Contracts />} />
           <Route path="/letters" element={<Letters />} />

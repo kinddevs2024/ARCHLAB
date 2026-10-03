@@ -9,7 +9,7 @@ const auditLogSchema = new mongoose.Schema(
     details: mongoose.Schema.Types.Mixed,
     ip: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 auditLogSchema.methods.toPublic = function toPublic() {

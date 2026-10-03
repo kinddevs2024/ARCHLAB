@@ -1,137 +1,257 @@
 import { useEffect, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { FaCamera } from "react-icons/fa";
 import { api, apiMessage } from "../api/client";
 import { Button } from "../components/Button";
 import { Input, Select } from "../components/Input";
 import { AuthImage } from "../components/AuthImage";
+import { Notice, FigmaIcon } from "../components/Workspace";
 import { useAuth } from "../context/AuthContext";
-
 export default function Settings() {
-  const avatarRef = useRef(null);
-  const { user, updateUser } = useAuth();
-  const { theme, setTheme } = useOutletContext();
-  const [profile, setProfile] = useState({
-    name: user.name || "",
-    surname: user.surname || "",
-    phone: user.phone || "",
-    address: user.address || "",
-    username: user.username || "",
-  });
-  const [password, setPassword] = useState({ currentPassword: "", newPassword: "" });
-  const [settings, setSettings] = useState({ companyName: "ARCH LAB", archivePath: "uploads", language: "uz", theme });
-  const [message, setMessage] = useState("");
-
+  const avatar = useRef(null),
+    { user, updateUser, hasRole } = useAuth(),
+    { theme, setTheme } = useOutletContext(),
+    [profile, setProfile] = useState({
+      name: user.name || "",
+      surname: user.surname || "",
+      phone: user.phone || "",
+      address: user.address || "",
+      username: user.username || "",
+    }),
+    [password, setPassword] = useState({
+      currentPassword: "",
+      newPassword: "",
+    }),
+    [company, setCompany] = useState(""),
+    [error, setError] = useState(""),
+    [message, setMessage] = useState(""),
+    [busy, setBusy] = useState("");
   useEffect(() => {
-    api.get("/api/settings").then(({ data }) => setSettings((current) => ({ ...current, ...data }))).catch(() => {});
-  }, []);
-
-  const saveProfile = async (event) => {
-    event.preventDefault();
+    if (hasRole("Admin"))
+      api
+        .get("/api/settings")
+        .then(({ data }) => setCompany(data.companyName))
+        .catch((e) => setError(apiMessage(e)));
+  }, [hasRole]);
+  const act = async (key, fn, success) => {
+    setBusy(key);
+    setError("");
     setMessage("");
     try {
-      const { data } = await api.patch("/api/profile", profile);
-      updateUser(data.user);
-      setMessage("Profil saqlandi");
-    } catch (err) {
-      setMessage(apiMessage(err, "Profilni saqlashda xatolik"));
+      await fn();
+      setMessage(success);
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy("");
     }
   };
-
-  const savePassword = async (event) => {
-    event.preventDefault();
-    setMessage("");
-    try {
-      await api.patch("/api/profile/password", password);
-      setPassword({ currentPassword: "", newPassword: "" });
-      setMessage("Parol yangilandi");
-    } catch (err) {
-      setMessage(apiMessage(err, "Parolni almashtirishda xatolik"));
-    }
+  const submitProfile = (e) => {
+    e.preventDefault();
+    act(
+      "profile",
+      async () => {
+        const { data } = await api.patch("/api/profile", profile);
+        updateUser(data.user);
+      },
+      "Profil saqlandi",
+    );
   };
-
-  const saveSettings = async (event) => {
-    event.preventDefault();
-    setMessage("");
-    try {
-      const { data } = await api.patch("/api/settings", settings);
-      setSettings(data);
-      setTheme(data.theme === "system" ? "light" : data.theme);
-      setMessage("Sozlamalar saqlandi");
-    } catch (err) {
-      setMessage(apiMessage(err, "Sozlamalarni saqlashda xatolik"));
-    }
+  const submitPassword = (e) => {
+    e.preventDefault();
+    act(
+      "password",
+      async () => {
+        await api.patch("/api/profile/password", password);
+        setPassword({ currentPassword: "", newPassword: "" });
+      },
+      "Parol yangilandi. Boshqa sessiyalar yopildi.",
+    );
   };
-
-  const uploadAvatar = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const body = new FormData();
-    body.append("kind", "avatar");
-    body.append("entityType", "users");
-    body.append("entityId", user.id);
-    body.append("section", "avatars");
-    body.append("file", file);
-    const { data } = await api.post("/api/profile/avatar", body);
-    updateUser(data.user);
-    event.target.value = "";
-    setMessage("Avatar yuklandi");
+  const preferences = (next) =>
+    act(
+      "theme",
+      async () => {
+        const { data } = await api.patch("/api/profile/preferences", {
+          theme: next,
+        });
+        updateUser(data.user);
+        setTheme(next);
+      },
+      "Shaxsiy sozlamalar saqlandi",
+    );
+  const upload = (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (file)
+      act(
+        "avatar",
+        async () => {
+          const body = new FormData();
+          body.append("file", file);
+          const { data } = await api.post("/api/profile/avatar", body);
+          updateUser(data.user);
+        },
+        "Avatar saqlandi",
+      );
   };
-
   return (
     <div>
-      <h1 className="mb-[28px] text-[34px] font-extrabold tracking-[-0.02em]">Sozlamalar</h1>
-      {message ? <div className="mb-5 rounded-lg bg-white p-4 text-sm font-semibold text-[#C9A77F] shadow-sm dark:bg-[#20262d]">{message}</div> : null}
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <form className="rounded-xl bg-white p-6 shadow-sm dark:bg-[#20262d]" onSubmit={saveProfile}>
-          <h2 className="mb-5 text-xl font-bold">Profil</h2>
-          <div className="mb-6 flex items-center gap-5">
+      <div className="page-heading">
+        <h1>Sozlamalar</h1>
+      </div>
+      <Notice error={error} />
+      {message && (
+        <p role="status" className="notice-success">
+          {message}
+        </p>
+      )}
+      <div className="settings-grid">
+        <form className="settings-card form-grid" onSubmit={submitProfile}>
+          <h2>Profil</h2>
+          <div className="flex items-center gap-5">
             <div className="relative">
-              <AuthImage src={user.avatar} alt="" className="h-24 w-24 rounded-full bg-[#ffb51b] object-cover" />
-              <button type="button" onClick={() => avatarRef.current?.click()} className="absolute bottom-0 right-0 grid h-8 w-8 place-items-center rounded-full bg-[#C9A77F] text-white">
-                <FaCamera />
+              <AuthImage
+                src={user.avatar}
+                alt="Profil rasmi"
+                className="h-24 w-24 rounded-full object-cover bg-gray-200"
+              />
+              <button
+                type="button"
+                className="avatar-camera"
+                aria-label="Profil rasmini tanlash"
+                disabled={!!busy}
+                onClick={() => avatar.current.click()}
+              >
+                <FigmaIcon screen="employee-form" name="imgGroup4" />
               </button>
-              <input ref={avatarRef} className="hidden" type="file" accept="image/*" onChange={uploadAvatar} />
+              <input
+                ref={avatar}
+                hidden
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp"
+                onChange={upload}
+              />
             </div>
             <div>
-              <p className="text-lg font-bold">{user.email}</p>
-              <p className="text-sm text-[#7d8291]">{user.status}</p>
+              <strong>{user.email}</strong>
+              <p className="mt-2 text-gray-500">
+                {user.position || user.status}
+              </p>
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input label="Ism" value={profile.name} onChange={(e) => setProfile((x) => ({ ...x, name: e.target.value }))} />
-            <Input label="Familiya" value={profile.surname} onChange={(e) => setProfile((x) => ({ ...x, surname: e.target.value }))} />
-            <Input label="Telefon" value={profile.phone} onChange={(e) => setProfile((x) => ({ ...x, phone: e.target.value }))} />
-            <Input label="Username" value={profile.username} onChange={(e) => setProfile((x) => ({ ...x, username: e.target.value }))} />
+          <div className="form-columns">
+            <Input
+              label="Ism"
+              maxLength={120}
+              required
+              value={profile.name}
+              onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+            />
+            <Input
+              label="Familiya"
+              maxLength={120}
+              value={profile.surname}
+              onChange={(e) =>
+                setProfile({ ...profile, surname: e.target.value })
+              }
+            />
+            <Input
+              label="Telefon"
+              maxLength={40}
+              value={profile.phone}
+              onChange={(e) =>
+                setProfile({ ...profile, phone: e.target.value })
+              }
+            />
+            <Input
+              label="Username"
+              maxLength={80}
+              value={profile.username}
+              onChange={(e) =>
+                setProfile({ ...profile, username: e.target.value })
+              }
+            />
           </div>
-          <div className="mt-4"><Input label="Manzil" value={profile.address} onChange={(e) => setProfile((x) => ({ ...x, address: e.target.value }))} /></div>
-          <Button className="mt-5 h-[49px] px-6" type="submit">Profilni saqlash</Button>
+          <Input
+            label="Manzil"
+            maxLength={500}
+            value={profile.address}
+            onChange={(e) =>
+              setProfile({ ...profile, address: e.target.value })
+            }
+          />
+          <Button disabled={!!busy} type="submit">
+            {busy === "profile" ? "Saqlanmoqda..." : "Profilni saqlash"}
+          </Button>
         </form>
-
-        <div className="grid gap-6">
-          <form className="rounded-xl bg-white p-6 shadow-sm dark:bg-[#20262d]" onSubmit={savePassword}>
-            <h2 className="mb-5 text-xl font-bold">Parol</h2>
-            <div className="grid gap-4">
-              <Input label="Hozirgi parol" type="password" value={password.currentPassword} onChange={(e) => setPassword((x) => ({ ...x, currentPassword: e.target.value }))} />
-              <Input label="Yangi parol" type="password" value={password.newPassword} onChange={(e) => setPassword((x) => ({ ...x, newPassword: e.target.value }))} />
-            </div>
-            <Button className="mt-5 h-[49px] px-6" type="submit">Parolni almashtirish</Button>
+        <div className="form-grid">
+          <form className="settings-card form-grid" onSubmit={submitPassword}>
+            <h2>Parolni almashtirish</h2>
+            <Input
+              label="Hozirgi parol"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password.currentPassword}
+              onChange={(e) =>
+                setPassword({ ...password, currentPassword: e.target.value })
+              }
+            />
+            <Input
+              label="Yangi parol"
+              type="password"
+              minLength={12}
+              maxLength={72}
+              autoComplete="new-password"
+              required
+              value={password.newPassword}
+              onChange={(e) =>
+                setPassword({ ...password, newPassword: e.target.value })
+              }
+            />
+            <small className="text-gray-500">Kamida 12 ta belgi.</small>
+            <Button type="submit" disabled={!!busy}>
+              Parolni almashtirish
+            </Button>
           </form>
-
-          <form className="rounded-xl bg-white p-6 shadow-sm dark:bg-[#20262d]" onSubmit={saveSettings}>
-            <h2 className="mb-5 text-xl font-bold">Kompaniya</h2>
-            <div className="grid gap-4">
-              <Input label="Kompaniya nomi" value={settings.companyName} onChange={(e) => setSettings((x) => ({ ...x, companyName: e.target.value }))} />
-              <Input label="Arxiv papkasi" value={settings.archivePath} onChange={(e) => setSettings((x) => ({ ...x, archivePath: e.target.value }))} />
-              <Select label="Tema" value={settings.theme || theme} onChange={(e) => { setSettings((x) => ({ ...x, theme: e.target.value })); setTheme(e.target.value === "system" ? "light" : e.target.value); }}>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="system">System</option>
-              </Select>
-            </div>
-            <Button className="mt-5 h-[49px] px-6" type="submit">Sozlamalarni saqlash</Button>
-          </form>
+          <section className="settings-card form-grid">
+            <h2>Shaxsiy sozlamalar</h2>
+            <Select
+              label="Tema"
+              value={theme}
+              disabled={!!busy}
+              onChange={(e) => preferences(e.target.value)}
+            >
+              <option value="light">Yorug'</option>
+              <option value="dark">Qorong'i</option>
+              <option value="system">Tizim sozlamasi</option>
+            </Select>
+          </section>
+          {hasRole("Admin") && (
+            <form
+              className="settings-card form-grid"
+              onSubmit={(e) => {
+                e.preventDefault();
+                act(
+                  "company",
+                  () => api.patch("/api/settings", { companyName: company }),
+                  "Kompaniya nomi saqlandi",
+                );
+              }}
+            >
+              <h2>Kompaniya</h2>
+              <Input
+                label="Kompaniya nomi"
+                required
+                maxLength={120}
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+              />
+              <Button type="submit" disabled={!!busy}>
+                Saqlash
+              </Button>
+            </form>
+          )}
         </div>
       </div>
     </div>

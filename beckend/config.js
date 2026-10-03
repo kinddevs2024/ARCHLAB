@@ -3,7 +3,10 @@ import path from "path";
 
 dotenv.config({ path: process.env.ENV_FILE || ".env", quiet: true });
 
-if (process.env.NODE_ENV === "production" && (!process.env.MONGODB_URI || (process.env.JWT_SECRET || "").length < 48)) {
+if (
+  process.env.NODE_ENV === "production" &&
+  (!process.env.MONGODB_URI || (process.env.JWT_SECRET || "").length < 48)
+) {
   throw new Error("Production requires MONGODB_URI and a strong JWT_SECRET");
 }
 
@@ -13,6 +16,9 @@ const number = (value, fallback) => {
 };
 
 export const config = {
+  originProxySecret: process.env.ORIGIN_PROXY_SECRET || "",
+  turnSecret: process.env.TURN_SECRET || "",
+  turnUrls: (process.env.TURN_URLS || "").split(",").filter(Boolean),
   nodeEnv: process.env.NODE_ENV || "development",
   host: process.env.HOST || "127.0.0.1",
   port: number(process.env.PORT, 4000),

@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 const fileSchema = new mongoose.Schema(
   {
+    deletedAt: { type: Date, default: null, index: true },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     originalName: { type: String, required: true },
     storedName: { type: String, required: true },
     path: { type: String, required: true },
@@ -12,10 +14,20 @@ const fileSchema = new mongoose.Schema(
     section: { type: String, default: "archive", trim: true, index: true },
     entityType: { type: String, default: "", trim: true, index: true },
     entityId: { type: String, default: "", trim: true, index: true },
+    folder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProjectFolder",
+      index: true,
+    },
+    conversation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Conversation",
+      index: true,
+    },
     project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 fileSchema.methods.toPublic = function toPublic() {

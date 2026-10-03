@@ -3,19 +3,34 @@ import { roles } from "../config.js";
 
 const userSchema = new mongoose.Schema(
   {
+    position: { type: String, default: "", trim: true },
+    preferences: {
+      theme: {
+        type: String,
+        enum: ["light", "dark", "system"],
+        default: "system",
+      },
+      language: { type: String, default: "uz" },
+    },
     status: { type: String, enum: roles, default: "User", index: true },
     name: { type: String, default: "", trim: true },
     surname: { type: String, default: "", trim: true },
     phone: { type: String, default: "", trim: true },
     address: { type: String, default: "", trim: true },
     username: { type: String, default: "", trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     password: { type: String, required: true, select: false },
     avatar: String,
     sessionVersion: { type: Number, default: 0, select: false },
     active: { type: Boolean, default: true, index: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.methods.toPublic = function toPublic() {

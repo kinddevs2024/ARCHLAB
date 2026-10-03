@@ -4,7 +4,9 @@ import { config } from "./config.js";
 export const connectDb = async () => {
   const uri = config.mongoUri;
   if (!uri) {
-    throw new Error("MONGODB_URI is missing. Add it to .env before starting the backend.");
+    throw new Error(
+      "MONGODB_URI is missing. Add it to .env before starting the backend.",
+    );
   }
 
   console.log("Connecting to ARCHLAB MongoDB");

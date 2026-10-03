@@ -1,14 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { FaDownload, FaFolder, FaPen, FaTrash, FaUpload } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, apiMessage } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/Button";
 import { Input, Select, Textarea } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { Table } from "../components/Table";
 import { StatusBadge } from "../components/StatusBadge";
-
-const defaultFolders = [
+import { FileArchiveModal } from "../components/FileArchiveModal";
+import {
+  Notice,
+  Pagination,
+  FigmaIcon,
+  RowActions,
+  ConfirmAction,
+} from "../components/Workspace";
+import { useCollection, dateLabel } from "../api/workspace";
+import Documents from "./Documents";
+const defaults = [
   "Firmaga xat",
   "KADASTR",
   "RUXSATNOMA",
@@ -20,150 +29,399 @@ const defaultFolders = [
   "Qo'shni roziliklari",
   "Toposyomka",
 ];
-
-const emptyFolder = { title: "", status: "new", description: "" };
-
 export default function ProjectDetail() {
-  const { id } = useParams();
-  const fileRef = useRef(null);
-  const [project, setProject] = useState(null);
-  const [folders, setFolders] = useState([]);
-  const [files, setFiles] = useState([]);
-  const [form, setForm] = useState(emptyFolder);
-  const [folderOpen, setFolderOpen] = useState(false);
-  const [selectedFolder, setSelectedFolder] = useState(null);
-  const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    const [projectRes, foldersRes, filesRes] = await Promise.all([
-      api.get(`/api/projects/${id}`),
-      api.get(`/api/project-folders?project=${id}&limit=100`),
-      api.get(`/api/files?project=${id}&limit=100`),
-    ]);
-    setProject(projectRes.data);
-    setFolders(foldersRes.data.data);
-    setFiles(filesRes.data.data);
-  }, [id]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const createDefaults = async () => {
-    await Promise.all(defaultFolders.map((title, order) => api.post("/api/project-folders", { project: id, title, order })));
-    await load();
+  const { id, folderId } = useParams(),
+    navigate = useNavigate(),
+    { hasRole } = useAuth(),
+    [project, setProject] = useState(null),
+    [parent, setParent] = useState(null),
+    [tab, setTab] = useState("folders"),
+    [open, setOpen] = useState(false),
+    [editing, setEditing] = useState(null),
+    [form, setForm] = useState({
+      title: "",
+      status: "new",
+      description: "",
+      contactPhone: "",
+    }),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [remove, setRemove] = useState(null),
+    [archive, setArchive] = useState(null),
+    [trash, setTrash] = useState(false),
+    folders = useCollection("/api/project-folders", {
+      project: id,
+      parent: folderId,
+      trash,
+    });
+  useEffect(() => {
+    setTab("folders");
+    setTrash(false);
+    api
+      .get(`/api/projects/${id}`)
+      .then(({ data }) => setProject(data))
+      .catch((e) => setError(apiMessage(e)));
+    if (folderId)
+      api
+        .get(`/api/project-folders/${folderId}`)
+        .then(({ data }) => setParent(data))
+        .catch((e) => setError(apiMessage(e)));
+    else setParent(null);
+  }, [id, folderId]);
+  const create = () => {
+    setEditing(null);
+    setForm({ title: "", status: "new", description: "", contactPhone: "" });
+    setError("");
+    setOpen(true);
   };
-
-  const saveFolder = async (event) => {
-    event.preventDefault();
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
     setError("");
     try {
-      if (selectedFolder) await api.patch(`/api/project-folders/${selectedFolder}`, form);
-      else await api.post("/api/project-folders", { ...form, project: id });
-      setFolderOpen(false);
-      setSelectedFolder(null);
-      setForm(emptyFolder);
-      await load();
-    } catch (err) {
-      setError(apiMessage(err, "Papkani saqlashda xatolik"));
+      await api[editing ? "patch" : "post"](
+        editing ? `/api/project-folders/${editing}` : "/api/project-folders",
+        { ...form, ...(!editing ? { project: id, parent: folderId } : {}) },
+      );
+      setOpen(false);
+      folders.reload();
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
     }
   };
-
-  const upload = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const body = new FormData();
-    body.append("project", id);
-    body.append("kind", "project");
-    body.append("entityType", "projects");
-    body.append("entityId", id);
-    body.append("section", "archive");
-    body.append("file", file);
-    await api.post("/api/files", body);
-    event.target.value = "";
-    await load();
+  const archiveFolder = async () => {
+    setBusy(true);
+    try {
+      await api.delete(`/api/project-folders/${remove.id}`);
+      setRemove(null);
+      folders.reload();
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
+    }
   };
-
-  const download = async (file) => {
-    const response = await api.get(`/api/files/${file.id}/download`, { responseType: "blob" });
-    const url = URL.createObjectURL(response.data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = file.originalName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+  const defaultFolders = async () => {
+    setBusy(true);
+    try {
+      await api.post("/api/project-folders/defaults", {
+        project: id,
+        titles: defaults,
+      });
+      folders.reload();
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
+    }
   };
-
   return (
     <div>
-      <div className="mb-[26px] flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[34px] font-extrabold tracking-[-0.02em]">{project?.title || "Loyiha"}</h1>
-          <p className="mt-1 text-sm text-[#7d8291]">{project?.customerName || ""} {project?.customerPhone || ""}</p>
-        </div>
-        <div className="flex gap-4">
-          <Button className="h-[49px] px-6 text-[16px]" onClick={() => fileRef.current?.click()}><FaUpload /> Yuklash</Button>
-          <Button className="h-[49px] px-6 text-[16px]" onClick={() => setFolderOpen(true)}>Yangi papka</Button>
-          {!folders.length ? <Button className="h-[49px] px-6 text-[16px]" onClick={createDefaults}>Standart papkalar</Button> : null}
-          <input ref={fileRef} className="hidden" type="file" onChange={upload} />
-        </div>
+      <nav className="breadcrumb">
+        <Link to="/projects">Loyihalar</Link>
+        <span>›</span>
+        {folderId ? (
+          <>
+            <Link to={`/projects/${id}`}>{project?.title || "Loyiha"}</Link>
+            <span>›</span>
+            <span>{parent?.title}</span>
+          </>
+        ) : (
+          <span>{project?.title}</span>
+        )}
+      </nav>
+      <div className="page-heading">
+        <h1>{folderId ? parent?.title : project?.title || "Loyiha"}</h1>
+        {tab === "folders" && (
+          <div className="heading-actions">
+            <Button
+              onClick={() =>
+                setArchive({
+                  entityType: folderId ? "project-folders" : "projects",
+                  entityId: folderId || id,
+                  title: parent?.title || project?.title,
+                })
+              }
+            >
+              Yuklash
+            </Button>
+            {hasRole("Manager") && !trash && (
+              <Button onClick={create}>Yangi</Button>
+            )}
+          </div>
+        )}
       </div>
-
-      <Table
-        columns={["Papka", "Status", "Sana", "Tahrirlash", "O'chirish"]}
-        rows={folders}
-        empty="Bu loyiha ichida papkalar hali yo'q"
-        renderRow={(folder, index) => (
-          <tr key={folder.id} className={`h-[58px] shadow-sm ${index === 0 ? "bg-[#c9a77f] text-white" : "bg-white text-[#303442] dark:bg-[#20262d] dark:text-white"}`}>
-            <td className="rounded-l-[5px] px-4">
-              <div className="flex items-center gap-4"><FaFolder className="text-[26px]" /> {folder.title}</div>
-            </td>
-            <td className="px-4"><StatusBadge value={folder.status} /></td>
-            <td className="px-4">{folder.date ? new Date(folder.date).toLocaleDateString() : "-"}</td>
-            <td className="px-4">
-              <button className="grid h-8 w-8 place-items-center rounded-full bg-white/35 text-[#c9a77f]" onClick={() => { setSelectedFolder(folder.id); setForm({ title: folder.title, status: folder.status, description: folder.description || "" }); setFolderOpen(true); }}>
-                <FaPen className="text-xs" />
-              </button>
-            </td>
-            <td className="rounded-r-[5px] px-4">
-              <button className="grid h-8 w-8 place-items-center rounded-full bg-[#fff1f1] text-[#ff1f2f]" onClick={async () => { await api.delete(`/api/project-folders/${folder.id}`); await load(); }}>
-                <FaTrash className="text-xs" />
-              </button>
-            </td>
-          </tr>
-        )}
-      />
-
-      <h2 className="mb-3 mt-8 text-2xl font-bold">Fayllar</h2>
-      <Table
-        columns={["Nomi", "Tur", "Hajm", "Sana", "Yuklash"]}
-        rows={files}
-        empty="Fayllar hali yuklanmagan"
-        renderRow={(file, index) => (
-          <tr key={file.id} className={`h-[58px] shadow-sm ${index === 0 ? "bg-[#c9a77f] text-white" : "bg-white text-[#303442] dark:bg-[#20262d] dark:text-white"}`}>
-            <td className="rounded-l-[5px] px-4">{file.originalName}</td>
-            <td className="px-4">{file.extension || file.kind}</td>
-            <td className="px-4">{Math.round(file.size / 1024)} KB</td>
-            <td className="px-4">{new Date(file.createdAt).toLocaleDateString()}</td>
-            <td className="rounded-r-[5px] px-4"><button className="h-8 rounded-[8px] bg-white px-3 text-[#303442] shadow" onClick={() => download(file)}><FaDownload className="mr-2 inline" />Yuklash</button></td>
-          </tr>
-        )}
-      />
-
-      <Modal open={folderOpen} title={selectedFolder ? "Papkani tahrirlash" : "Papka yaratish"} onClose={() => setFolderOpen(false)}>
-        {error ? <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
-        <form className="grid gap-[18px]" onSubmit={saveFolder}>
-          <Input label="Papka nomi" value={form.title} onChange={(event) => setForm((x) => ({ ...x, title: event.target.value }))} />
-          <Select label="Status" value={form.status} onChange={(event) => setForm((x) => ({ ...x, status: event.target.value }))}>
-            <option value="new">Yangi</option>
-            <option value="in_progress">Jarayonda</option>
-            <option value="done">Tayyor</option>
-            <option value="archived">Arxiv</option>
+      {!folderId && hasRole("Manager") && (
+        <div className="tabs">
+          <button
+            className={tab === "folders" ? "active" : ""}
+            onClick={() => setTab("folders")}
+          >
+            Papkalar
+          </button>
+          <button
+            className={tab === "contracts" ? "active" : ""}
+            onClick={() => setTab("contracts")}
+          >
+            Shartnoma
+          </button>
+          <button
+            className={tab === "expenses" ? "active" : ""}
+            onClick={() => setTab("expenses")}
+          >
+            Xarajatlar
+          </button>
+        </div>
+      )}
+      {tab !== "folders" ? (
+        <Documents type={tab} project={id} embedded />
+      ) : (
+        <>
+          <div className="filter-bar">
+            {hasRole("Manager") && (
+              <Button variant="ghost" onClick={() => setTrash((v) => !v)}>
+                {trash ? "Faol papkalar" : "Arxiv"}
+              </Button>
+            )}
+            {!folderId &&
+              !trash &&
+              !folders.rows.length &&
+              !folders.loading &&
+              hasRole("Manager") && (
+                <Button
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={defaultFolders}
+                >
+                  Standart papkalar
+                </Button>
+              )}
+          </div>
+          <Notice
+            error={error || folders.error}
+            loading={folders.loading}
+            onRetry={folders.reload}
+          />
+          {!folders.loading && (
+            <Table
+              columns={
+                folderId
+                  ? [
+                      "Eskiz",
+                      "Tel raqam",
+                      "Sana",
+                      "Tahrirlash",
+                      "O'chirish",
+                      "Yuklash",
+                    ]
+                  : [
+                      "",
+                      "Papkalar",
+                      "Sana",
+                      "Yuklash",
+                      "Tahrirlash",
+                      "O'chirish",
+                    ]
+              }
+              rows={folders.rows}
+              empty="Bu papka ichida papkalar hali yo'q"
+              renderRow={(folder, i) => (
+                <tr key={folder.id} className={i === 0 ? "selected" : ""}>
+                  {!folderId && (
+                    <td>
+                      <StatusBadge value={folder.status} />
+                    </td>
+                  )}
+                  <td>
+                    <button
+                      className="folder-name"
+                      disabled={trash}
+                      onClick={() =>
+                        navigate(`/projects/${id}/folders/${folder.id}`)
+                      }
+                    >
+                      <span>›</span>
+                      <FigmaIcon
+                        name={i === 0 ? "imgFoldrIcon" : "imgFolderIcon"}
+                      />
+                      {folder.title}
+                    </button>
+                  </td>
+                  {folderId && (
+                    <td>
+                      {folder.contactPhone || project?.customerPhone || "—"}
+                    </td>
+                  )}
+                  <td>{dateLabel(folder.date)}</td>
+                  {!folderId && (
+                    <td>
+                      <button
+                        className="file-type-button"
+                        onClick={() =>
+                          setArchive({
+                            entityType: "project-folders",
+                            entityId: folder.id,
+                            title: folder.title,
+                            folder: folder.id,
+                          })
+                        }
+                      >
+                        Yuklash
+                      </button>
+                    </td>
+                  )}
+                  <td>
+                    <RowActions
+                      onEdit={
+                        !trash && hasRole("Manager")
+                          ? () => {
+                              setEditing(folder.id);
+                              setForm({
+                                title: folder.title,
+                                status: folder.status,
+                                description: folder.description || "",
+                                contactPhone: folder.contactPhone || "",
+                              });
+                              setError("");
+                              setOpen(true);
+                            }
+                          : null
+                      }
+                    />
+                  </td>
+                  <td>
+                    <RowActions
+                      onArchive={
+                        !trash && hasRole("Manager")
+                          ? () => setRemove(folder)
+                          : null
+                      }
+                      onRestore={
+                        trash
+                          ? async () => {
+                              try {
+                                await api.post(
+                                  `/api/project-folders/${folder.id}/restore`,
+                                );
+                                folders.reload();
+                              } catch (e) {
+                                setError(apiMessage(e));
+                              }
+                            }
+                          : null
+                      }
+                    />
+                  </td>
+                  {folderId && (
+                    <td>
+                      <button
+                        className="file-type-button"
+                        onClick={() =>
+                          setArchive({
+                            entityType: "project-folders",
+                            entityId: folder.id,
+                            title: folder.title,
+                            folder: folder.id,
+                          })
+                        }
+                      >
+                        Yuklash
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              )}
+            />
+          )}
+          <Pagination {...folders} onChange={folders.setPage} />
+          <FilesInFolder project={id} folder={folderId} />
+        </>
+      )}
+      <Modal
+        open={open}
+        title={editing ? "Papkani tahrirlash" : "Papka yaratish"}
+        onClose={() => setOpen(false)}
+      >
+        <form className="form-grid" onSubmit={submit}>
+          <Notice error={error} />
+          <Input
+            label={folderId ? "Eskiz nomi" : "Papka nomi"}
+            required
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <Input
+            label="Tel raqam"
+            value={form.contactPhone}
+            onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
+          />
+          <Select
+            label="Status"
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value })}
+          >
+            {["new", "in_progress", "done", "archived"].map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
           </Select>
-          <Textarea label="Izoh" value={form.description} onChange={(event) => setForm((x) => ({ ...x, description: event.target.value }))} />
-          <Button className="h-[57px] w-[202px] text-[16px]" type="submit">Saqlash</Button>
+          <Textarea
+            label="Izoh"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+          <Button type="submit" disabled={busy}>
+            Saqlash
+          </Button>
         </form>
       </Modal>
+      <ConfirmAction
+        open={!!remove}
+        busy={busy}
+        onClose={() => setRemove(null)}
+        onConfirm={archiveFolder}
+      />
+      <FileArchiveModal
+        open={!!archive}
+        onClose={() => setArchive(null)}
+        {...archive}
+        project={id}
+        kind="project"
+      />
+    </div>
+  );
+}
+function FilesInFolder({ project, folder }) {
+  const [open, setOpen] = useState(false),
+    collection = useCollection("/api/files", {
+      entityType: folder ? "project-folders" : "projects",
+      entityId: folder || project,
+    });
+  return (
+    <div className="mt-8">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Fayllar</h2>
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Fayllarni boshqarish{" "}
+          {collection.meta?.total ? `(${collection.meta.total})` : ""}
+        </Button>
+      </div>
+      <Notice error={collection.error} />
+      <FileArchiveModal
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          collection.reload();
+        }}
+        entityType={folder ? "project-folders" : "projects"}
+        entityId={folder || project}
+        folder={folder}
+        project={project}
+        kind="project"
+      />
     </div>
   );
 }

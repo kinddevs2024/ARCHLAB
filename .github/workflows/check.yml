@@ -1,0 +1,26 @@
+name: ARCHLAB checks
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7.0
+        ports: ["27021:27017"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm audit --audit-level=moderate
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:integration
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-verification
+          path: test-artifacts

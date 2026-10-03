@@ -8,7 +8,9 @@ const run = async () => {
   const password = process.env.OWNER_PASSWORD;
 
   if (!email || !password) {
-    throw new Error("Set OWNER_EMAIL and OWNER_PASSWORD before running seed:owner");
+    throw new Error(
+      "Set OWNER_EMAIL and OWNER_PASSWORD before running seed:owner",
+    );
   }
 
   const user = await User.findOneAndUpdate(
@@ -23,7 +25,7 @@ const run = async () => {
       active: true,
       password: await bcrypt.hash(password, 10),
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
   );
 
   console.log(`Owner ready: ${user.email}`);

@@ -6,10 +6,14 @@ const companySettingsSchema = new mongoose.Schema(
     companyName: { type: String, default: "ARCH LAB", trim: true },
     archivePath: { type: String, default: "uploads", trim: true },
     language: { type: String, default: "uz", trim: true },
-    theme: { type: String, enum: ["light", "dark", "system"], default: "light" },
+    theme: {
+      type: String,
+      enum: ["light", "dark", "system"],
+      default: "light",
+    },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 companySettingsSchema.methods.toPublic = function toPublic() {
@@ -20,4 +24,7 @@ companySettingsSchema.methods.toPublic = function toPublic() {
   return data;
 };
 
-export const CompanySettings = mongoose.model("CompanySettings", companySettingsSchema);
+export const CompanySettings = mongoose.model(
+  "CompanySettings",
+  companySettingsSchema,
+);

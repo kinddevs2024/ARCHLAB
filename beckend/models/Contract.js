@@ -3,7 +3,13 @@ import { documentStatuses } from "../config.js";
 
 const contractSchema = new mongoose.Schema(
   {
-    project: { type: mongoose.Schema.Types.ObjectId, ref: "Project", index: true },
+    deletedAt: { type: Date, default: null, index: true },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+      index: true,
+    },
     title: { type: String, required: true, trim: true },
     contractNumber: { type: String, default: "", trim: true, index: true },
     customerName: { type: String, default: "", trim: true },
@@ -13,11 +19,16 @@ const contractSchema = new mongoose.Schema(
     totalPaid: { type: Number, default: 0 },
     signedAt: { type: Date, default: Date.now, index: true },
     closedAt: Date,
-    status: { type: String, enum: documentStatuses, default: "draft", index: true },
+    status: {
+      type: String,
+      enum: documentStatuses,
+      default: "draft",
+      index: true,
+    },
     notes: { type: String, default: "" },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 contractSchema.methods.toPublic = function toPublic() {

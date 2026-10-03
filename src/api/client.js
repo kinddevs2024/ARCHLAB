@@ -13,7 +13,7 @@ api.interceptors.response.use(
       window.dispatchEvent(new Event("auth:logout"));
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export const apiMessage = (error, fallback = "Xatolik yuz berdi") =>

@@ -1,100 +1,522 @@
-import { useCallback, useEffect, useState } from "react";
-import { FaPaperclip, FaSearch } from "react-icons/fa";
-import { IoSend } from "react-icons/io5";
-import { api } from "../api/client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FaArrowLeft } from "react-icons/fa";
+import { api, apiMessage } from "../api/client";
+import { useAuth } from "../context/AuthContext";
+import { useRealtime } from "../context/RealtimeContext";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
-import { useAuth } from "../context/AuthContext";
-
+import { AuthImage } from "../components/AuthImage";
+import { Modal } from "../components/Modal";
+import { FigmaIcon, Notice } from "../components/Workspace";
+import { idOf, downloadFile } from "../api/workspace";
+const timeLabel = (value) =>
+  value
+    ? new Date(value).toLocaleTimeString("uz-UZ", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
 export default function Chat() {
-  const { user } = useAuth();
-  const [conversations, setConversations] = useState([]);
-  const [active, setActive] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-  const [title, setTitle] = useState("");
-
+  const { user } = useAuth(),
+    { socket, connected, startCall } = useRealtime(),
+    [conversations, setConversations] = useState([]),
+    [activeId, setActiveId] = useState(null),
+    [messages, setMessages] = useState([]),
+    [cursor, setCursor] = useState(null),
+    [hasMore, setHasMore] = useState(false),
+    [text, setText] = useState(""),
+    [search, setSearch] = useState(""),
+    [error, setError] = useState(""),
+    [loading, setLoading] = useState(true),
+    [loadingMessages, setLoadingMessages] = useState(false),
+    [busy, setBusy] = useState(false),
+    [open, setOpen] = useState(false),
+    [title, setTitle] = useState(""),
+    [people, setPeople] = useState([]),
+    [selected, setSelected] = useState([]),
+    [files, setFiles] = useState([]),
+    fileRef = useRef(null),
+    scroll = useRef(null),
+    activeRef = useRef(null),
+    bottom = useRef(true);
+  activeRef.current = activeId;
+  const active = conversations.find((c) => c.id === activeId),
+    peer = active?.participants.find((p) => idOf(p) !== user.id),
+    name = (p) =>
+      [p.name, p.surname].filter(Boolean).join(" ") || p.position || "Xodim";
   const loadConversations = useCallback(async () => {
-    const { data } = await api.get("/api/chat/conversations");
-    setConversations(data.data);
-    if (!active && data.data[0]) setActive(data.data[0]);
-  }, [active]);
-
-  useEffect(() => { loadConversations(); }, [loadConversations]);
-
+    try {
+      const { data } = await api.get("/api/chat/conversations");
+      setConversations(data.data);
+      setError("");
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  const loadMessages = useCallback(async (id, initial = false) => {
+    if (initial) {
+      setLoadingMessages(true);
+      setMessages([]);
+    }
+    try {
+      const { data } = await api.get(`/api/chat/conversations/${id}/messages`);
+      if (activeRef.current !== id) return;
+      setMessages((current) =>
+        initial
+          ? data.data
+          : [
+              ...current,
+              ...data.data.filter((m) => !current.some((c) => c.id === m.id)),
+            ].map((m) => data.data.find((f) => f.id === m.id) || m),
+      );
+      if (initial) {
+        setCursor(data.nextCursor);
+        setHasMore(data.hasMore);
+      }
+      await api.patch(`/api/chat/conversations/${id}/read`);
+      if (bottom.current)
+        requestAnimationFrame(() =>
+          scroll.current?.scrollTo({ top: scroll.current.scrollHeight }),
+        );
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      if (activeRef.current === id) setLoadingMessages(false);
+    }
+  }, []);
   useEffect(() => {
-    if (!active) return;
-    api.get(`/api/chat/conversations/${active.id}/messages?limit=100`).then(({ data }) => setMessages(data.data));
-  }, [active]);
-
-  const createConversation = async (event) => {
-    event.preventDefault();
-    if (!title.trim()) return;
-    const { data } = await api.post("/api/chat/conversations", { title });
-    setTitle("");
-    setActive(data);
-    await loadConversations();
-  };
-
-  const send = async () => {
-    if (!active || !text.trim()) return;
-    await api.post(`/api/chat/conversations/${active.id}/messages`, { text });
+    loadConversations();
+    const timer = setInterval(loadConversations, 30000);
+    return () => clearInterval(timer);
+  }, [loadConversations]);
+  useEffect(() => {
     setText("");
-    const { data } = await api.get(`/api/chat/conversations/${active.id}/messages?limit=100`);
-    setMessages(data.data);
-    await loadConversations();
+    setFiles([]);
+    bottom.current = true;
+    if (activeId) loadMessages(activeId, true);
+  }, [activeId, loadMessages]);
+  useEffect(() => {
+    if (!socket) return;
+    const change = () => loadConversations(),
+      message = ({ conversation }) => {
+        loadConversations();
+        if (conversation === activeRef.current) loadMessages(conversation);
+      },
+      read = ({ conversation, user: reader }) => {
+        if (conversation === activeRef.current)
+          setMessages((ms) =>
+            ms.map((m) => ({
+              ...m,
+              readBy: [...new Set([...(m.readBy || []).map(idOf), reader])],
+            })),
+          );
+      };
+    socket.on("chat:changed", change);
+    socket.on("chat:message", message);
+    socket.on("chat:read", read);
+    return () => {
+      socket.off("chat:changed", change);
+      socket.off("chat:message", message);
+      socket.off("chat:read", read);
+    };
+  }, [socket, loadConversations, loadMessages]);
+  const older = async () => {
+    setLoadingMessages(true);
+    const beforeHeight = scroll.current?.scrollHeight;
+    try {
+      const { data } = await api.get(
+        `/api/chat/conversations/${activeId}/messages`,
+        { params: { before: cursor } },
+      );
+      setMessages((ms) => [
+        ...data.data.filter((m) => !ms.some((old) => old.id === m.id)),
+        ...ms,
+      ]);
+      setCursor(data.nextCursor);
+      setHasMore(data.hasMore);
+      requestAnimationFrame(() => {
+        if (scroll.current)
+          scroll.current.scrollTop = scroll.current.scrollHeight - beforeHeight;
+      });
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setLoadingMessages(false);
+    }
   };
-
+  const newChat = async () => {
+    setOpen(true);
+    setTitle("");
+    setSelected([]);
+    try {
+      const { data } = await api.get("/api/users/directory");
+      setPeople(data.data.filter((p) => p.id !== user.id));
+    } catch (e) {
+      setError(apiMessage(e));
+    }
+  };
+  const create = async (e) => {
+    e.preventDefault();
+    if (!selected.length) return;
+    setBusy(true);
+    try {
+      const { data } = await api.post("/api/chat/conversations", {
+        title:
+          title.trim() ||
+          people
+            .filter((p) => selected.includes(p.id))
+            .map(name)
+            .join(", ")
+            .slice(0, 120),
+        participants: selected,
+      });
+      setOpen(false);
+      await loadConversations();
+      setActiveId(data.id);
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const send = async (e) => {
+    e.preventDefault();
+    if (!activeId || (!text.trim() && !files.length) || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api.post(`/api/chat/conversations/${activeId}/messages`, {
+        text,
+        attachments: files.map((f) => f.id),
+      });
+      setText("");
+      setFiles([]);
+      bottom.current = true;
+      await loadMessages(activeId);
+      await loadConversations();
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const attach = async (e) => {
+    const input = e.target,
+      chosen = [...input.files];
+    input.value = "";
+    if (chosen.length + files.length > 5) {
+      setError("Bir xabarga 5 tagacha fayl mumkin");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      for (const file of chosen) {
+        const body = new FormData();
+        body.append("file", file);
+        body.append("kind", "chat");
+        body.append("entityType", "conversations");
+        body.append("entityId", activeId);
+        body.append("conversation", activeId);
+        const { data } = await api.post("/api/files", body);
+        setFiles((current) => [...current, data]);
+      }
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <div className="h-[calc(100vh-148px)] overflow-hidden rounded-xl border border-[#e6e9f0] bg-white shadow-sm">
-      <div className="grid h-full grid-cols-[360px_1fr]">
-        <aside className="border-r border-[#e6e9f0]">
-          <div className="border-b border-[#eef1f7] p-4">
-            <div className="mb-3 flex items-center rounded-xl border border-[#e6e9f0] px-3 py-2">
-              <input className="w-full bg-transparent text-sm outline-none" placeholder="Search Name" />
-              <FaSearch className="text-[#8e92bc]" />
-            </div>
-            <form className="flex gap-2" onSubmit={createConversation}>
-              <Input placeholder="Yangi chat" value={title} onChange={(e) => setTitle(e.target.value)} />
-              <Button type="submit">+</Button>
-            </form>
-          </div>
-          <div className="h-[calc(100%-132px)] overflow-y-auto p-3">
-            {conversations.map((item) => (
-              <button key={item.id} onClick={() => setActive(item)} className={`mb-2 flex w-full items-center gap-3 rounded-xl p-3 text-left ${active?.id === item.id ? "bg-[#faf7f1]" : "hover:bg-[#fbfcff]"}`}>
-                <div className="grid h-12 w-12 place-items-center rounded-full bg-[#e6e9f0] font-bold">{item.title.slice(0, 1)}</div>
-                <div className="min-w-0">
-                  <p className="font-semibold">{item.title}</p>
-                  <p className="truncate text-xs text-[#8e92bc]">{item.lastMessage || "Xabar yo'q"}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </aside>
-        <section className="flex min-w-0 flex-col bg-[#f6f8fd]">
-          <div className="flex h-[82px] items-center justify-between border-b border-[#e6e9f0] bg-white px-6">
-            <div>
-              <p className="font-bold">{active?.title || "Chat tanlang"}</p>
-              <p className="text-xs text-[#6b7280]">Online</p>
-            </div>
-          </div>
-          <div className="flex-1 space-y-3 overflow-y-auto p-6">
-            {messages.map((message) => {
-              const mine = String(message.sender?._id || message.sender) === user.id;
+    <div className={`chat-workspace ${activeId ? "chat-active" : ""}`}>
+      <aside className="chat-sidebar">
+        <div className="chat-search">
+          <input
+            aria-label="Suhbat qidirish"
+            placeholder="Search Name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <FigmaIcon screen="chat" name="imgSearchNormal" />
+        </div>
+        <div className="chat-create">
+          <button onClick={newChat}>+ Yangi chat</button>
+          <span className={connected ? "text-green-600" : "text-gray-400"}>
+            {connected ? "Ulangan" : "Aloqa tiklanmoqda"}
+          </span>
+        </div>
+        <Notice loading={loading} />
+        <div className="chat-list">
+          {conversations
+            .filter((c) =>
+              `${c.title} ${c.participants.map(name).join(" ")}`
+                .toLowerCase()
+                .includes(search.toLowerCase()),
+            )
+            .map((c) => {
+              const other = c.participants.find((p) => idOf(p) !== user.id);
               return (
-                <div key={message.id} className={`max-w-[60%] rounded-xl px-4 py-3 text-sm shadow-sm ${mine ? "ml-auto bg-[#C6A47E] text-white" : "bg-white text-[#20242a]"}`}>
-                  {message.text}
-                </div>
+                <button
+                  key={c.id}
+                  className={`chat-person ${activeId === c.id ? "selected" : ""}`}
+                  onClick={() => {
+                    setActiveId(c.id);
+                    setConversations((current) =>
+                      current.map((v) =>
+                        v.id === c.id ? { ...v, unread: 0 } : v,
+                      ),
+                    );
+                  }}
+                >
+                  <AuthImage src={other?.avatar} alt="" />
+                  <span className="chat-preview">
+                    <span>
+                      <strong>{c.title}</strong>
+                      <time>{timeLabel(c.lastMessageAt)}</time>
+                    </span>
+                    <span>
+                      <small>{c.lastMessage || "Xabar yo'q"}</small>
+                      {c.unread > 0 && (
+                        <b className="chat-unread">{c.unread}</b>
+                      )}
+                    </span>
+                  </span>
+                </button>
               );
             })}
+          {!loading && !conversations.length && (
+            <p className="p-6 text-gray-500">
+              Suhbatni boshlash uchun xodim tanlang.
+            </p>
+          )}
+        </div>
+      </aside>
+      <section className="chat-conversation">
+        {active ? (
+          <>
+            <header className="chat-heading">
+              <button
+                className="chat-back icon-button"
+                aria-label="Suhbatlar"
+                onClick={() => setActiveId(null)}
+              >
+                <FaArrowLeft />
+              </button>
+              <AuthImage src={peer?.avatar} alt="" />
+              <div>
+                <strong>{active.title}</strong>
+                <small>
+                  <i className={peer?.online ? "online-dot" : "offline-dot"} />
+                  {active.participants.length > 2
+                    ? `${active.participants.length} ta xodim`
+                    : peer?.online
+                      ? "Online"
+                      : "Offline"}
+                </small>
+              </div>
+              <div className="chat-call-actions">
+                <button
+                  className="icon-button"
+                  disabled={!connected || !peer}
+                  aria-label="Audio qo'ng'iroq"
+                  onClick={() =>
+                    startCall(active.id, idOf(peer), false, name(peer))
+                  }
+                >
+                  <FigmaIcon screen="chat" name="imgVuesaxLinearCall" />
+                </button>
+                <button
+                  className="icon-button"
+                  disabled={!connected || !peer}
+                  aria-label="Video qo'ng'iroq"
+                  onClick={() =>
+                    startCall(active.id, idOf(peer), true, name(peer))
+                  }
+                >
+                  <FigmaIcon screen="chat" name="imgVuesaxLinearVideo" />
+                </button>
+              </div>
+            </header>
+            <div
+              className="chat-messages"
+              ref={scroll}
+              onScroll={() => {
+                bottom.current =
+                  scroll.current.scrollHeight -
+                    scroll.current.scrollTop -
+                    scroll.current.clientHeight <
+                  80;
+              }}
+            >
+              {hasMore && (
+                <Button
+                  variant="secondary"
+                  disabled={loadingMessages}
+                  onClick={older}
+                >
+                  Oldingi xabarlar
+                </Button>
+              )}
+              <Notice loading={loadingMessages} />
+              {messages.map((m) => {
+                const mine = idOf(m.sender) === user.id,
+                  read = (m.readBy || []).some((v) => idOf(v) !== user.id);
+                return (
+                  <article
+                    key={m.id}
+                    className={`message ${mine ? "mine" : ""}`}
+                  >
+                    <div className="message-bubble">
+                      {active.participants.length > 2 && !mine && (
+                        <strong className="block mb-2">{name(m.sender)}</strong>
+                      )}
+                      {m.text && <p>{m.text}</p>}
+                      {m.attachments?.map((f) => (
+                        <button
+                          key={f.id}
+                          className="chat-attachment"
+                          onClick={() =>
+                            downloadFile(f).catch((e) =>
+                              setError(apiMessage(e)),
+                            )
+                          }
+                        >
+                          {[".png", ".jpg", ".jpeg", ".webp"].includes(
+                            f.extension,
+                          ) && (
+                            <AuthImage
+                              src={`/api/files/${f.id}/download`}
+                              alt={f.originalName}
+                              className="message-image"
+                            />
+                          )}
+                          {f.originalName}
+                          <small>
+                            {(f.size / 1024).toFixed(0)} KB · Yuklab olish
+                          </small>
+                        </button>
+                      ))}
+                      <footer>
+                        <time>{timeLabel(m.createdAt)}</time>
+                        {mine && (
+                          <span aria-label={read ? "O'qildi" : "Yuborildi"}>
+                            <FigmaIcon
+                              screen="chat"
+                              name={read ? "imgDoneAll1" : "imgDoneAll3"}
+                            />
+                          </span>
+                        )}
+                      </footer>
+                    </div>
+                  </article>
+                );
+              })}
+              {!loadingMessages && !messages.length && (
+                <p className="loading-state">Hali xabar yo'q</p>
+              )}
+            </div>
+            <Notice error={error} />
+            {files.length > 0 && (
+              <div className="chat-files">
+                {files.map((f) => (
+                  <span key={f.id}>
+                    {f.originalName}
+                    <button
+                      aria-label={`${f.originalName} ni olib tashlash`}
+                      onClick={async () => {
+                        try {
+                          await api.delete(`/api/files/${f.id}`);
+                          setFiles((fs) => fs.filter((v) => v.id !== f.id));
+                        } catch (e) {
+                          setError(apiMessage(e));
+                        }
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <form className="chat-composer" onSubmit={send}>
+              <button
+                type="button"
+                className="icon-button"
+                disabled={busy}
+                aria-label="Fayl biriktirish"
+                onClick={() => fileRef.current.click()}
+              >
+                <FigmaIcon screen="chat" name="imgVuesaxLinearAttachCircle" />
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                hidden
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.zip,.dwg,.dxf"
+                onChange={attach}
+              />
+              <input
+                aria-label="Xabar matni"
+                placeholder="Send your message..."
+                value={text}
+                maxLength={5000}
+                onChange={(e) => setText(e.target.value)}
+              />
+              <button
+                className="chat-send"
+                aria-label="Xabar yuborish"
+                disabled={busy || (!text.trim() && !files.length)}
+              >
+                <FigmaIcon screen="chat" name="imgVuesaxBoldSend2" />
+              </button>
+            </form>
+          </>
+        ) : (
+          <div className="chat-empty">
+            <h1>Chat</h1>
+            <p>Suhbatni tanlang yoki yangi chat oching.</p>
+            <Notice error={error} />
           </div>
-          <div className="flex h-[82px] items-center gap-3 border-t border-[#e6e9f0] bg-white px-6">
-            <FaPaperclip className="text-[#8e92bc]" />
-            <input value={text} onChange={(e) => setText(e.target.value)} className="flex-1 bg-transparent text-sm outline-none" placeholder="Send your message..." />
-            <button onClick={send} className="grid h-11 w-11 place-items-center rounded-xl bg-[#C6A47E] text-white"><IoSend /></button>
+        )}
+      </section>
+      <Modal open={open} title="Yangi chat" onClose={() => setOpen(false)}>
+        <form className="form-grid" onSubmit={create}>
+          <Notice error={error} />
+          <Input
+            label="Chat nomi (ixtiyoriy)"
+            maxLength={120}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <p>Xodimlarni tanlang</p>
+          <div className="participant-list">
+            {people.map((p) => (
+              <label key={p.id}>
+                <input
+                  type="checkbox"
+                  checked={selected.includes(p.id)}
+                  onChange={(e) =>
+                    setSelected((ids) =>
+                      e.target.checked
+                        ? [...ids, p.id]
+                        : ids.filter((id) => id !== p.id),
+                    )
+                  }
+                />
+                <AuthImage src={p.avatar} alt="" />
+                {name(p)}
+                <small>{p.position}</small>
+              </label>
+            ))}
           </div>
-        </section>
-      </div>
+          <Button disabled={busy || !selected.length || selected.length > 20}>
+            Chat ochish
+          </Button>
+        </form>
+      </Modal>
     </div>
   );
 }

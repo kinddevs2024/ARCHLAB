@@ -13,9 +13,20 @@ auditRouter.get(
   asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req.query);
     const [items, total] = await Promise.all([
-      AuditLog.find().populate("actor", "name surname email").sort({ createdAt: -1 }).skip(skip).limit(limit),
+      AuditLog.find()
+        .populate("actor", "name surname email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       AuditLog.countDocuments(),
     ]);
-    res.json(paged(items.map((item) => item.toPublic()), total, page, limit));
-  })
+    res.json(
+      paged(
+        items.map((item) => item.toPublic()),
+        total,
+        page,
+        limit,
+      ),
+    );
+  }),
 );

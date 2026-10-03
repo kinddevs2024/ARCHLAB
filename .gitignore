@@ -9,3 +9,5 @@ uploads
 .openai/*credential*
 sites-dist
 .openai/bootstrap-db.mjs
+
+test-artifacts

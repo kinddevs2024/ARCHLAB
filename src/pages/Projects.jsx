@@ -1,28 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaChevronRight, FaPen, FaTrash } from "react-icons/fa";
 import { api, apiMessage } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/Button";
 import { Input, Select, Textarea } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { Table } from "../components/Table";
 import { StatusBadge } from "../components/StatusBadge";
-
-const empty = {
-  title: "",
-  company: "",
-  objectName: "",
-  objectAddress: "",
-  customerName: "",
-  customerPhone: "",
-  contractAmount: "",
-  category: "general",
-  status: "new",
-  description: "",
-  assignedTo: [],
-};
-
-const categoryOptions = [
+import { FileArchiveModal } from "../components/FileArchiveModal";
+import {
+  Notice,
+  Pagination,
+  YearFilter,
+  FigmaIcon,
+  RowActions,
+  ConfirmAction,
+} from "../components/Workspace";
+import { useCollection, idOf, dateLabel } from "../api/workspace";
+const categories = [
   ["general", "Loyiha"],
   ["single", "Yakka tartibdagi loyiha"],
   ["interior", "Interyer"],
@@ -31,154 +26,356 @@ const categoryOptions = [
   ["control", "Tashqi nazorat"],
   ["render", "Rendr"],
 ];
-
-export default function Projects({ title, category }) {
-  const navigate = useNavigate();
-  const [rows, setRows] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [meta, setMeta] = useState(null);
-  const [filters, setFilters] = useState({ search: "", status: "", year: "" });
-  const [form, setForm] = useState({ ...empty, category: category || "general" });
-  const [editing, setEditing] = useState(null);
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (category) params.set("category", category);
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) params.set(key, value);
+const empty = {
+  title: "",
+  company: "",
+  objectName: "",
+  objectAddress: "",
+  customerName: "",
+  customerPhone: "",
+  contractAmount: 0,
+  description: "",
+  status: "new",
+  date: "",
+  category: "general",
+  assignedTo: [],
+  helper: "",
+  master: "",
+};
+export default function Projects({ title = "Loyihalar", category }) {
+  const navigate = useNavigate(),
+    { hasRole } = useAuth(),
+    [year, setYear] = useState(""),
+    [search, setSearch] = useState(""),
+    [trash, setTrash] = useState(false),
+    [users, setUsers] = useState([]),
+    [open, setOpen] = useState(false),
+    [editing, setEditing] = useState(null),
+    [form, setForm] = useState(empty),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [remove, setRemove] = useState(null),
+    [archive, setArchive] = useState(null),
+    collection = useCollection("/api/projects", {
+      category,
+      year,
+      search,
+      trash,
     });
-    const { data } = await api.get(`/api/projects?${params}`);
-    setRows(data.data);
-    setMeta(data.meta);
-  }, [category, filters]);
-
-  useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    api.get("/api/users?limit=100").then(({ data }) => setUsers(data.data)).catch(() => setUsers([]));
+    api
+      .get("/api/users/directory")
+      .then(({ data }) => setUsers(data.data))
+      .catch(() => {});
   }, []);
-
-  const resetCreate = () => {
+  const create = () => {
     setEditing(null);
-    setForm({ ...empty, category: category || "general" });
-    setError("");
-    setOpen(true);
-  };
-
-  const edit = (project) => {
-    setEditing(project.id);
     setForm({
       ...empty,
-      ...project,
-      contractAmount: project.contractAmount || "",
-      assignedTo: (project.assignedTo || []).map((user) => user.id || user),
+      category: category || "general",
+      date: new Date().toISOString().slice(0, 10),
     });
     setError("");
     setOpen(true);
   };
-
-  const submit = async (event) => {
-    event.preventDefault();
+  const edit = (item) => {
+    setEditing(item.id);
+    setForm({
+      ...empty,
+      ...item,
+      date: item.date?.slice(0, 10) || "",
+      assignedTo: item.assignedTo.map(idOf),
+      helper: idOf(item.helper),
+      master: idOf(item.master),
+    });
+    setError("");
+    setOpen(true);
+  };
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
     setError("");
     try {
-      if (editing) await api.patch(`/api/projects/${editing}`, form);
-      else await api.post("/api/projects", form);
+      const data = {
+        ...form,
+        title: form.title || form.objectName || form.customerName,
+      };
+      if (!hasRole("Admin"))
+        for (const key of ["assignedTo", "helper", "master", "category"])
+          delete data[key];
+      await api[editing ? "patch" : "post"](
+        editing ? `/api/projects/${editing}` : "/api/projects",
+        data,
+      );
       setOpen(false);
-      await load();
-    } catch (err) {
-      setError(apiMessage(err, "Loyihani saqlashda xatolik"));
+      collection.reload();
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
     }
   };
-
-  const remove = async (id) => {
-    await api.delete(`/api/projects/${id}`);
-    await load();
+  const action = async () => {
+    setBusy(true);
+    try {
+      await api.delete(`/api/projects/${remove.id}`);
+      setRemove(null);
+      collection.reload();
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
+    }
   };
-
   return (
     <div>
-      <div className="mb-[26px] flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[34px] font-extrabold tracking-[-0.02em]">{title}</h1>
-          <p className="mt-1 text-sm text-[#7d8291]">Jami: {meta?.total || 0}</p>
-        </div>
-        <div className="flex gap-4">
-          <Button className="h-[49px] px-6 text-[16px]" onClick={resetCreate}>Yangi</Button>
+      <div className="page-heading">
+        <h1>{title}</h1>
+        <div className="heading-actions">
+          <YearFilter value={year} onChange={setYear} />
+          {hasRole("Admin") && !trash && (
+            <Button onClick={create}>Yangi loyiha</Button>
+          )}
         </div>
       </div>
-
-      <div className="mb-5 grid gap-3 md:grid-cols-[1fr_170px_130px_auto]">
-        <Input placeholder="Loyiha, mijoz yoki obyekt qidirish" value={filters.search} onChange={(e) => setFilters((x) => ({ ...x, search: e.target.value }))} />
-        <Select value={filters.status} onChange={(e) => setFilters((x) => ({ ...x, status: e.target.value }))}>
-          <option value="">Barcha status</option>
-          <option value="new">Yangi</option>
-          <option value="in_progress">Jarayonda</option>
-          <option value="done">Tayyor</option>
-          <option value="archived">Arxiv</option>
-        </Select>
-        <Input type="number" placeholder="Yil" value={filters.year} onChange={(e) => setFilters((x) => ({ ...x, year: e.target.value }))} />
-        <Button variant="secondary" onClick={load}>Filter</Button>
-      </div>
-
-      <Table
-        columns={["Loyiha", "Mijoz", "Tel raqam", "Kategoriya", "Status", "Sana", "Amal"]}
-        rows={rows}
-        empty="Hali loyiha yo'q"
-        renderRow={(project, index) => (
-          <tr key={project.id} className={`h-[58px] shadow-sm ${index === 0 ? "bg-[#c9a77f] text-white" : "bg-white text-[#303442] dark:bg-[#20262d] dark:text-white"}`}>
-            <td className="rounded-l-[5px] px-4">
-              <button className="flex items-center gap-3 text-left font-semibold" onClick={() => navigate(`/projects/${project.id}`)}>
-                <FaChevronRight /> {project.title}
-              </button>
-            </td>
-            <td className="px-4">{project.customerName || "-"}</td>
-            <td className="px-4">{project.customerPhone || "-"}</td>
-            <td className="px-4">{project.category}</td>
-            <td className="px-4"><StatusBadge value={project.status} /></td>
-            <td className="px-4">{project.date ? new Date(project.date).toLocaleDateString() : "-"}</td>
-            <td className="rounded-r-[5px] px-4">
-              <div className="flex gap-2">
-                <button className="grid h-8 w-8 place-items-center rounded-full bg-white/35 text-[#c9a77f]" onClick={() => edit(project)}><FaPen className="text-xs" /></button>
-                <button className="grid h-8 w-8 place-items-center rounded-full bg-[#fff1f1] text-[#ff1f2f]" onClick={() => remove(project.id)}><FaTrash className="text-xs" /></button>
-              </div>
-            </td>
-          </tr>
+      <div className="filter-bar">
+        <input
+          placeholder="Loyiha yoki mijozni qidirish"
+          aria-label="Loyihalarni qidirish"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {hasRole("Manager") && (
+          <Button variant="ghost" onClick={() => setTrash((v) => !v)}>
+            {trash ? "Faol loyihalar" : "Arxiv"}
+          </Button>
         )}
+      </div>
+      <Notice
+        error={collection.error || (!open ? error : "")}
+        loading={collection.loading}
+        onRetry={collection.reload}
       />
-
-      <Modal open={open} title={editing ? "Loyihani tahrirlash" : "Loyiha yaratish"} onClose={() => setOpen(false)}>
-        {error ? <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
-        <form className="grid gap-[18px]" onSubmit={submit}>
-          <Input label="Loyiha nomi" value={form.title} onChange={(e) => setForm((x) => ({ ...x, title: e.target.value }))} />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Mijoz ismi" value={form.customerName} onChange={(e) => setForm((x) => ({ ...x, customerName: e.target.value }))} />
-            <Input label="Tel raqam" value={form.customerPhone} onChange={(e) => setForm((x) => ({ ...x, customerPhone: e.target.value }))} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Obyekt nomi" value={form.objectName} onChange={(e) => setForm((x) => ({ ...x, objectName: e.target.value }))} />
-            <Input label="Manzil" value={form.objectAddress} onChange={(e) => setForm((x) => ({ ...x, objectAddress: e.target.value }))} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Select label="Kategoriya" value={form.category} onChange={(e) => setForm((x) => ({ ...x, category: e.target.value }))}>
-              {categoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </Select>
-            <Select label="Status" value={form.status} onChange={(e) => setForm((x) => ({ ...x, status: e.target.value }))}>
-              <option value="new">Yangi</option>
-              <option value="in_progress">Jarayonda</option>
-              <option value="done">Tayyor</option>
-              <option value="archived">Arxiv</option>
-            </Select>
-          </div>
-          <Input label="Summa" type="number" value={form.contractAmount} onChange={(e) => setForm((x) => ({ ...x, contractAmount: e.target.value }))} />
-          <Select label="Biriktirilgan xodim" value={form.assignedTo[0] || ""} onChange={(e) => setForm((x) => ({ ...x, assignedTo: e.target.value ? [e.target.value] : [] }))}>
-            <option value="">Tanlanmagan</option>
-            {users.map((user) => <option key={user.id} value={user.id}>{user.name || user.username || user.email}</option>)}
-          </Select>
-          <Textarea label="Proyekt haqida" value={form.description} onChange={(e) => setForm((x) => ({ ...x, description: e.target.value }))} />
-          <Button className="h-[57px] w-[202px] text-[16px]" type="submit">Saqlash</Button>
+      {!collection.loading && !collection.error && (
+        <Table
+          columns={[
+            "",
+            "Kompaniya nomi",
+            "Obyekt nomi",
+            "Obyekt joyi",
+            "Sana",
+            "Yuklash",
+            "",
+          ]}
+          rows={collection.rows}
+          empty="Hali loyiha yo'q"
+          renderRow={(item, i) => (
+            <tr key={item.id} className={i === 0 ? "selected" : ""}>
+              <td>
+                <StatusBadge value={item.status} />
+              </td>
+              <td>
+                <button
+                  className="folder-name"
+                  onClick={() => navigate(`/projects/${item.id}`)}
+                  disabled={trash}
+                >
+                  <FigmaIcon
+                    name={i === 0 ? "imgFoldrIcon" : "imgFolderIcon"}
+                  />
+                  {item.company || item.title}
+                </button>
+              </td>
+              <td>{item.objectName || item.title}</td>
+              <td>{item.objectAddress || "—"}</td>
+              <td className="whitespace-nowrap">{dateLabel(item.date)}</td>
+              <td>
+                {!trash && (
+                  <button
+                    className="file-type-button"
+                    onClick={() => setArchive(item)}
+                  >
+                    Yuklash
+                  </button>
+                )}
+              </td>
+              <td>
+                <RowActions
+                  onEdit={
+                    !trash && hasRole("Manager") ? () => edit(item) : null
+                  }
+                  onArchive={
+                    !trash && hasRole("Manager") ? () => setRemove(item) : null
+                  }
+                  onRestore={
+                    trash
+                      ? async () => {
+                          try {
+                            await api.post(`/api/projects/${item.id}/restore`);
+                            collection.reload();
+                          } catch (e) {
+                            setError(apiMessage(e));
+                          }
+                        }
+                      : null
+                  }
+                />
+              </td>
+            </tr>
+          )}
+        />
+      )}
+      <Pagination {...collection} onChange={collection.setPage} />
+      <Modal
+        open={open}
+        title={editing ? "Loyihani tahrirlash" : "Loyiha yaratish"}
+        onClose={() => setOpen(false)}
+      >
+        <form className="form-grid" onSubmit={submit}>
+          <Notice error={error} />
+          <Input
+            label="Mijoz ismi"
+            required
+            value={form.customerName}
+            onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+          />
+          {hasRole("Admin") && (
+            <>
+              <Select
+                label="Yordamchi ismi"
+                value={form.helper}
+                onChange={(e) => setForm({ ...form, helper: e.target.value })}
+              >
+                <option value="">Tanlang</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} {u.surname}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Ustaning ismi"
+                value={form.master}
+                onChange={(e) => setForm({ ...form, master: e.target.value })}
+              >
+                <option value="">Tanlang</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} {u.surname}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Loyiha"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
+                {categories.map(([v, t]) => (
+                  <option key={v} value={v}>
+                    {t}
+                  </option>
+                ))}
+              </Select>
+            </>
+          )}
+          <Textarea
+            label="Proyekt haqida"
+            placeholder="Kontentingizni shu yerda chop eting...."
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+          <details open={!!editing}>
+            <summary className="cursor-pointer text-gray-500">
+              Qo'shimcha ma'lumotlar
+            </summary>
+            <div className="form-grid mt-4">
+              {[
+                ["title", "Loyiha nomi"],
+                ["company", "Kompaniya nomi"],
+                ["objectName", "Obyekt nomi"],
+                ["objectAddress", "Obyekt joyi"],
+                ["customerPhone", "Tel raqam"],
+              ].map(([key, label]) => (
+                <Input
+                  key={key}
+                  label={label}
+                  value={form[key]}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                />
+              ))}
+              <Input
+                label="Sana"
+                type="date"
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+              />
+              <Input
+                label="Dog summa"
+                type="number"
+                min="0"
+                value={form.contractAmount}
+                onChange={(e) =>
+                  setForm({ ...form, contractAmount: e.target.value })
+                }
+              />
+              <Select
+                label="Status"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
+                {["new", "in_progress", "done", "archived"].map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </Select>
+              {hasRole("Admin") && (
+                <Select
+                  label="Biriktirilgan xodimlar"
+                  multiple
+                  value={form.assignedTo}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      assignedTo: [...e.target.selectedOptions].map(
+                        (o) => o.value,
+                      ),
+                    })
+                  }
+                >
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name || u.email} {u.surname}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </div>
+          </details>
+          <Button
+            type="submit"
+            disabled={busy}
+            className="justify-self-start h-[57px]"
+          >
+            {busy ? "Saqlanmoqda..." : editing ? "Saqlash" : "Loyiha yaratish"}
+          </Button>
         </form>
       </Modal>
+      <ConfirmAction
+        open={!!remove}
+        onClose={() => setRemove(null)}
+        onConfirm={action}
+        busy={busy}
+      />
+      <FileArchiveModal
+        open={!!archive}
+        onClose={() => setArchive(null)}
+        title={archive?.title}
+        entityType="projects"
+        entityId={archive?.id}
+        project={archive?.id}
+        kind="project"
+      />
     </div>
   );
 }

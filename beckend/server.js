@@ -1,3 +1,8 @@
+import crypto from "node:crypto";
+import { isIP } from "node:net";
+import { exportRouter } from "./routes/export.js";
+import { createServer } from "node:http";
+import { attachRealtime } from "./realtime.js";
 import cors from "cors";
 import express from "express";
 import { config } from "./config.js";
@@ -25,11 +30,26 @@ const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", "loopback");
 app.use((req, res, next) => {
+  const provided = Buffer.from(req.get("x-archlab-proxy-token") || ""),
+    expected = Buffer.from(config.originProxySecret);
+  if (
+    expected.length &&
+    provided.length === expected.length &&
+    crypto.timingSafeEqual(provided, expected)
+  ) {
+    const ip = req.get("x-archlab-client-ip");
+    if (isIP(ip || "")) req.clientIp = ip;
+  }
   res.set("Cache-Control", "no-store");
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     const origin = req.get("origin");
-    if ((origin && !config.corsOrigin.includes(origin)) || req.get("sec-fetch-site") === "cross-site") {
-      return res.status(403).json({ message: "Origin rejected", code: "FORBIDDEN" });
+    if (
+      (origin && !config.corsOrigin.includes(origin)) ||
+      req.get("sec-fetch-site") === "cross-site"
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Origin rejected", code: "FORBIDDEN" });
     }
   }
   next();
@@ -39,7 +59,7 @@ app.use(
   cors({
     origin: config.corsOrigin.includes("*") ? true : config.corsOrigin,
     credentials: true,
-  })
+  }),
 );
 app.use(express.json({ limit: "10mb" }));
 
@@ -49,6 +69,7 @@ app.get("/", (req, res) => {
   res.redirect(`${req.protocol}://${frontendHost}/`);
 });
 
+app.use("/api/export", exportRouter);
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
@@ -72,7 +93,9 @@ app.use(errorHandler);
 
 connectDb()
   .then(() => {
-    app.listen(config.port, config.host, () => {
+    const server = createServer(app);
+    attachRealtime(server);
+    server.listen(config.port, config.host, () => {
       console.log(`API server running on http://localhost:${config.port}`);
     });
   })

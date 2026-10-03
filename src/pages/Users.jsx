@@ -1,105 +1,313 @@
-import { useEffect, useState } from "react";
-import { FaCamera, FaMapMarkerAlt, FaUser } from "react-icons/fa";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
 import { api, apiMessage } from "../api/client";
+import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/Button";
 import { Input, Select } from "../components/Input";
 import { Modal } from "../components/Modal";
 import { Table } from "../components/Table";
-
-const empty = { name: "", surname: "", phone: "", address: "", username: "", email: "", password: "", status: "User" };
-
+import { AuthImage } from "../components/AuthImage";
+import {
+  Pagination,
+  Notice,
+  RowActions,
+  FigmaIcon,
+} from "../components/Workspace";
+import { useCollection } from "../api/workspace";
+const empty = {
+  name: "",
+  surname: "",
+  phone: "",
+  email: "",
+  address: "",
+  username: "",
+  password: "",
+  position: "3d dizayner",
+  status: "User",
+  active: true,
+};
 export default function Users() {
-  const [rows, setRows] = useState([]);
-  const [form, setForm] = useState(empty);
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState("");
-
-  const load = async () => {
-    const { data } = await api.get("/api/users?limit=100");
-    setRows(data.data);
+  const { user, hasRole } = useAuth(),
+    [params] = useSearchParams(),
+    input = useRef(null),
+    [search, setSearch] = useState(""),
+    [form, setForm] = useState(empty),
+    [open, setOpen] = useState(false),
+    [editing, setEditing] = useState(null),
+    [photo, setPhoto] = useState(null),
+    [preview, setPreview] = useState(""),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    c = useCollection("/api/users", { search });
+  useEffect(() => {
+    if (!photo) {
+      setPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(photo);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
+  const edit = (item) => {
+    setEditing(item?.id || null);
+    setForm(item ? { ...empty, ...item, password: "" } : empty);
+    setPhoto(null);
+    setError("");
+    setOpen(true);
   };
-
-  useEffect(() => { load(); }, []);
-
-  const submit = async (event) => {
-    event.preventDefault();
+  useEffect(() => {
+    const id = params.get("record");
+    if (id) {
+      api
+        .get(`/api/users/${id}`)
+        .then(({ data: item }) => {
+          setEditing(item.id);
+          setForm({ ...empty, ...item, password: "" });
+          setOpen(true);
+        })
+        .catch((e) => setError(apiMessage(e)));
+    }
+  }, [params]);
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
     setError("");
     try {
-      await api.post("/api/users", form);
+      const payload = { ...form };
+      if (editing && !payload.password) delete payload.password;
+      const { data } = await api[editing ? "patch" : "post"](
+        editing ? `/api/users/${editing}` : "/api/users",
+        payload,
+      );
+      if (photo) {
+        const body = new FormData();
+        body.append("userId", data.id);
+        body.append("file", photo);
+        try {
+          await api.post("/api/profile/avatar", body);
+        } catch (e) {
+          setEditing(data.id);
+          c.reload();
+          setError(`Xodim saqlandi, ammo rasm yuklanmadi: ${apiMessage(e)}`);
+          return;
+        }
+      }
       setOpen(false);
-      setForm(empty);
-      await load();
-    } catch (err) {
-      setError(apiMessage(err, "Foydalanuvchini saqlashda xatolik"));
+      setEditing(null);
+      c.reload();
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
     }
   };
-
-  const deactivate = async (id) => {
-    await api.delete(`/api/users/${id}`);
-    await load();
-  };
-
+  if (!hasRole("Admin")) return <Notice error="Bu bo'lim uchun ruxsat yo'q" />;
   return (
     <div>
-      <div className="mb-[28px] flex items-center justify-between">
-        <h1 className="text-[34px] font-extrabold tracking-[-0.02em]">Foydalanuvchilar</h1>
-        <Button className="h-[49px] px-6 text-[16px]" onClick={() => setOpen(true)}>Xodim qo'shish</Button>
+      <div className="page-heading">
+        <h1>Foydalanuvchilar</h1>
+        <Button onClick={() => edit(null)}>Xodim qo'shish</Button>
       </div>
-      <Table
-        columns={["Ism", "Familiya", "Lavozim", "Telefon", "Email", "Holat", ""]}
-        rows={rows}
-        renderRow={(user, index) => (
-          <tr key={user.id} className={`h-[53px] shadow-sm ${index === 0 ? "bg-[#c9a77f] text-white" : "bg-white text-[#303442] dark:bg-[#20262d] dark:text-white"}`}>
-            <td className="rounded-l-[5px] px-4">{user.name || user.username || "-"}</td>
-            <td className="px-4">{user.surname || "-"}</td>
-            <td className="px-4">{user.status}</td>
-            <td className="px-4">{user.phone || "-"}</td>
-            <td className="px-4">{user.email}</td>
-            <td className="px-4">{user.active ? "Active" : "Blocked"}</td>
-            <td className="rounded-r-[5px] px-4"><Button variant="danger" onClick={() => deactivate(user.id)}>Block</Button></td>
-          </tr>
-        )}
+      <div className="filter-bar">
+        <input
+          aria-label="Xodim qidirish"
+          placeholder="Qidirish"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+      <Notice
+        error={c.error || (!open ? error : "")}
+        loading={c.loading}
+        onRetry={c.reload}
       />
-
-      <Modal open={open} title="Xodim qo'shish" onClose={() => setOpen(false)}>
-        {error ? <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
-        <form className="grid gap-[18px]" onSubmit={submit}>
-          <div className="grid grid-cols-[190px_1fr] items-center gap-10">
-            <div className="relative mx-auto h-[108px] w-[108px]">
-              <div className="grid h-full w-full place-items-center rounded-full bg-[#c8c8c8] text-white">
-                <FaUser className="text-[76px]" />
-              </div>
-              <button className="absolute bottom-0 right-0 grid h-8 w-8 place-items-center rounded-full bg-[#c9a77f] text-white" type="button">
-                <FaCamera className="text-[13px]" />
+      {!c.loading && (
+        <Table
+          columns={[
+            "Xodim",
+            "Lavozim",
+            "Telefon",
+            "Email",
+            "Ruxsat",
+            "Holat",
+            "",
+          ]}
+          rows={c.rows}
+          renderRow={(u, i) => (
+            <tr key={u.id} className={i === 0 ? "selected" : ""}>
+              <td>
+                <div className="flex items-center gap-3">
+                  <AuthImage
+                    src={u.avatar}
+                    alt=""
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                  {u.name} {u.surname}
+                </div>
+              </td>
+              <td>{u.position || "—"}</td>
+              <td>{u.phone || "—"}</td>
+              <td>{u.email}</td>
+              <td>{u.status}</td>
+              <td>{u.active ? "Faol" : "Bloklangan"}</td>
+              <td>
+                <RowActions
+                  onEdit={
+                    user.status === "Owner" || u.status !== "Owner"
+                      ? () => edit(u)
+                      : null
+                  }
+                />
+              </td>
+            </tr>
+          )}
+        />
+      )}
+      <Pagination {...c} onChange={c.setPage} />
+      <Modal
+        size="wide"
+        open={open}
+        title={editing ? "Xodimni tahrirlash" : "Xodim qo'shish"}
+        onClose={() => setOpen(false)}
+      >
+        <form className="form-grid" onSubmit={submit}>
+          <Notice error={error} />
+          <div className="employee-top">
+            <div className="employee-avatar">
+              {preview || form.avatar ? (
+                <AuthImage src={preview || form.avatar} alt="Xodim rasmi" />
+              ) : (
+                <span className="employee-placeholder">
+                  <FigmaIcon screen="employee-form" name="imgGroup2" />
+                  <FigmaIcon screen="employee-form" name="imgGroup3" />
+                </span>
+              )}
+              <button
+                type="button"
+                aria-label="Xodim rasmini tanlash"
+                onClick={() => input.current.click()}
+              >
+                <span className="figma-camera">
+                  <FigmaIcon screen="employee-form" name="imgGroup4" />
+                  <FigmaIcon screen="employee-form" name="imgGroup5" />
+                  <FigmaIcon screen="employee-form" name="imgGroup6" />
+                </span>
               </button>
+              <input
+                ref={input}
+                hidden
+                type="file"
+                accept=".png,.jpg,.jpeg,.webp"
+                onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+              />
             </div>
-            <Select label="Lavozim/Pozitsiya" value={form.status} onChange={(e) => setForm((x) => ({ ...x, status: e.target.value }))}>
-              <option value="User">3d dizayner</option>
-              <option value="Manager">Arxitektor</option>
-              <option value="Admin">Menejer</option>
-              <option value="Owner">Owner</option>
+            <Select
+              label="Lavozim/Pozitsiya"
+              value={form.position}
+              onChange={(e) => setForm({ ...form, position: e.target.value })}
+            >
+              {[
+                "3d dizayner",
+                "Arxitektor",
+                "Menejer",
+                "Asosiy arxitektor",
+                ...(form.position &&
+                ![
+                  "3d dizayner",
+                  "Arxitektor",
+                  "Menejer",
+                  "Asosiy arxitektor",
+                ].includes(form.position)
+                  ? [form.position]
+                  : []),
+              ].map((v) => (
+                <option key={v}>{v}</option>
+              ))}
             </Select>
           </div>
-
-          <h3 className="text-[18px] font-bold text-[#7c8494]">Asosiy ma'lumotlar</h3>
-          <div className="grid grid-cols-2 gap-5">
-            <Input label="Ism" placeholder="Ism" value={form.name} onChange={(e) => setForm((x) => ({ ...x, name: e.target.value }))} />
-            <Input label="Familiya" placeholder="Familiya" value={form.surname} onChange={(e) => setForm((x) => ({ ...x, surname: e.target.value }))} />
+          <h3 className="employee-section">Asosiy ma'lumotlar</h3>
+          <div className="form-columns">
+            <Input
+              label="Ism"
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <Input
+              label="Familiya"
+              value={form.surname}
+              onChange={(e) => setForm({ ...form, surname: e.target.value })}
+            />
           </div>
-
-          <h3 className="text-[18px] font-bold text-[#7c8494]">Bog'lanish uchun ma'lumot</h3>
-          <div className="grid grid-cols-2 gap-5">
-            <Input label="Telefon nomer" placeholder="+998" value={form.phone} onChange={(e) => setForm((x) => ({ ...x, phone: e.target.value }))} />
-            <Input label="Email" placeholder="email@example.com" type="email" value={form.email} onChange={(e) => setForm((x) => ({ ...x, email: e.target.value, username: e.target.value.split("@")[0] }))} />
+          <h3 className="employee-section">Bog'lanish uchun ma'lumot</h3>
+          <div className="form-columns">
+            <Input
+              label="Telefon nomer"
+              placeholder="+998"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+            <Input
+              label="Email"
+              type="email"
+              required
+              value={form.email}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  email: e.target.value,
+                  username: form.username || e.target.value.split("@")[0],
+                })
+              }
+            />
           </div>
-          <Input label="Boshlang'ich parol" type="password" value={form.password} onChange={(e) => setForm((x) => ({ ...x, password: e.target.value }))} />
-          <label className="relative block">
-            <Input label="Manzil" placeholder="Manzil" value={form.address} onChange={(e) => setForm((x) => ({ ...x, address: e.target.value }))} />
-            <FaMapMarkerAlt className="absolute bottom-[17px] right-5 text-xl text-[#7c8494]" />
-          </label>
-          <div className="flex justify-end pt-5">
-            <Button className="h-[50px] w-[110px]" type="submit">Qo'shish</Button>
+          <Input
+            label="Manzil"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+          />
+          <div className="form-columns">
+            <Select
+              label="Ruxsat darajasi"
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+            >
+              {[
+                "User",
+                "Manager",
+                "Admin",
+                ...(user.status === "Owner" ? ["Owner"] : []),
+              ].map((v) => (
+                <option value={v} key={v}>
+                  {v}
+                </option>
+              ))}
+            </Select>
+            <Input
+              label={editing ? "Yangi parol (ixtiyoriy)" : "Boshlang'ich parol"}
+              type="password"
+              required={!editing}
+              minLength={12}
+              maxLength={72}
+              autoComplete="new-password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
           </div>
+          {editing && editing !== user.id && (
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={form.active}
+                onChange={(e) => setForm({ ...form, active: e.target.checked })}
+              />
+              Kirishga ruxsat berish
+            </label>
+          )}
+          <Button type="submit" disabled={busy} className="justify-self-end">
+            {busy ? "Saqlanmoqda..." : editing ? "Saqlash" : "Qo'shish"}
+          </Button>
         </form>
       </Modal>
     </div>

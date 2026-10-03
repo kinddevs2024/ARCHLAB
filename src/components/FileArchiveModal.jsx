@@ -1,149 +1,186 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { FaDownload, FaExternalLinkAlt, FaFolderOpen, FaTrash, FaUpload } from "react-icons/fa";
+import { useRef, useState } from "react";
 import { api, apiMessage } from "../api/client";
 import { Button } from "./Button";
 import { Modal } from "./Modal";
-
-const appLabels = {
-  ".dwg": "AutoCAD",
-  ".dxf": "AutoCAD",
-  ".rvt": "Revit",
-  ".ifc": "BIM",
-  ".skp": "SketchUp",
-  ".pln": "ArchiCAD",
-  ".3dm": "Rhino",
-  ".max": "3ds Max",
-  ".obj": "3D",
-  ".fbx": "3D",
-  ".pdf": "PDF",
-  ".doc": "Word",
-  ".docx": "Word",
-  ".xls": "Excel",
-  ".xlsx": "Excel",
-};
-
-const formatSize = (value = 0) => {
-  if (value > 1024 * 1024 * 1024) return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;
-  if (value > 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`;
-  if (value > 1024) return `${(value / 1024).toFixed(1)} KB`;
-  return `${value} B`;
-};
-
-export function FileArchiveModal({ open, onClose, title, entityType, entityId, kind = "document", section = "archive" }) {
-  const fileRef = useRef(null);
-  const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    if (!open || !entityId) return;
-    setLoading(true);
-    setError("");
-    try {
-      const { data } = await api.get("/api/files", { params: { entityType, entityId, section, limit: 100 } });
-      setFiles(data.data);
-    } catch (err) {
-      setError(apiMessage(err, "Fayllarni yuklashda xatolik"));
-    } finally {
-      setLoading(false);
-    }
-  }, [open, entityType, entityId, section]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const upload = async (event) => {
-    const file = event.target.files?.[0];
+import { Pagination, Notice, RowActions, ConfirmAction } from "./Workspace";
+import { useCollection, downloadFile } from "../api/workspace";
+export function FileArchiveModal({
+  open,
+  onClose,
+  title,
+  entityType,
+  entityId,
+  kind = "document",
+  section = "archive",
+  project,
+  folder,
+  extension,
+}) {
+  return open && entityId ? (
+    <ArchiveContent
+      {...{
+        open,
+        onClose,
+        title,
+        entityType,
+        entityId,
+        kind,
+        section,
+        project,
+        folder,
+        extension,
+      }}
+    />
+  ) : null;
+}
+function ArchiveContent({
+  open,
+  onClose,
+  title,
+  entityType,
+  entityId,
+  kind,
+  section,
+  project,
+  folder,
+  extension,
+}) {
+  const input = useRef(null),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [remove, setRemove] = useState(null),
+    [trash, setTrash] = useState(false),
+    collection = useCollection("/api/files", {
+      entityType,
+      entityId,
+      section,
+      trash,
+      extension,
+    });
+  const upload = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-    const body = new FormData();
-    body.append("kind", kind);
-    body.append("entityType", entityType);
-    body.append("entityId", entityId);
-    body.append("section", section);
-    body.append("file", file);
+    setBusy(true);
+    setError("");
+    const data = new FormData();
+    for (const [key, value] of Object.entries({
+      entityType,
+      entityId,
+      kind,
+      section,
+      project,
+      folder,
+    }))
+      if (value) data.append(key, value);
+    data.append("file", file);
     try {
-      await api.post("/api/files", body);
-      await load();
-    } catch (err) {
-      setError(apiMessage(err, "Fayl yuklashda xatolik"));
+      await api.post("/api/files", data);
+      collection.reload();
+    } catch (e) {
+      setError(apiMessage(e));
     } finally {
-      event.target.value = "";
+      setBusy(false);
+      input.current.value = "";
     }
   };
-
-  const download = async (file) => {
-    const response = await api.get(`/api/files/${file.id}/download`, { responseType: "blob" });
-    const url = URL.createObjectURL(response.data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = file.originalName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+  const action = async () => {
+    setBusy(true);
+    try {
+      await api.delete(`/api/files/${remove.id}`);
+      setRemove(null);
+      collection.reload();
+    } catch (e) {
+      setError(apiMessage(e));
+    } finally {
+      setBusy(false);
+    }
   };
-
-  const openNative = async (file) => {
-    await download(file);
-  };
-
-  const remove = async (file) => {
-    await api.delete(`/api/files/${file.id}`);
-    await load();
-  };
-
   return (
-    <Modal open={open} title={title || "Fayllar arxivi"} onClose={onClose} size="wide">
-      <div className="space-y-5">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-sm text-[#7b8190] dark:text-slate-300">
-            Fayllar MongoDB ichiga yozilmaydi. Ular shu kompyuterdagi lokal arxiv papkasida saqlanadi.
-          </p>
-          <Button className="h-11 px-5" type="button" onClick={() => fileRef.current?.click()}>
-            <FaUpload /> Yuklash
+    <Modal open={open} title={title || "Fayllar"} onClose={onClose} size="wide">
+      <div className="mb-5 flex flex-wrap justify-between gap-3">
+        <Button variant="ghost" onClick={() => setTrash((v) => !v)}>
+          {trash ? "Faol fayllar" : "Arxiv"}
+        </Button>
+        {!trash && (
+          <Button disabled={busy} onClick={() => input.current.click()}>
+            {busy ? "Yuklanmoqda..." : "Fayl yuklash"}
           </Button>
-          <input ref={fileRef} className="hidden" type="file" onChange={upload} />
-        </div>
-
-        {error ? <div className="rounded-[8px] bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
-
-        <div className="overflow-hidden rounded-[8px] border border-[#e7ebf3] dark:border-slate-700">
-          {loading ? (
-            <div className="p-6 text-sm text-[#7b8190]">Yuklanmoqda...</div>
-          ) : files.length ? (
-            <div className="divide-y divide-[#edf0f6] dark:divide-slate-700">
-              {files.map((file) => (
-                <div key={file.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 bg-white px-4 py-3 dark:bg-[#20262d]">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 font-semibold text-[#303442] dark:text-white">
-                      <FaFolderOpen className="shrink-0 text-[#c9a77f]" />
-                      <span className="truncate">{file.originalName}</span>
-                    </div>
-                    <div className="mt-1 text-xs text-[#8b93a3]">
-                      {file.extension || "file"} · {formatSize(file.size)} · {file.createdAt ? new Date(file.createdAt).toLocaleString() : ""}
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-[#f1f3f7] px-3 py-1 text-xs font-bold text-[#687083] dark:bg-slate-700 dark:text-slate-200">
-                    {appLabels[file.extension] || "Open"}
-                  </span>
-                  <button className="grid h-9 w-9 place-items-center rounded-full bg-[#c9a77f] text-white" onClick={() => openNative(file)} title="Yuklab olib ochish">
-                    <FaExternalLinkAlt className="text-xs" />
+        )}
+        <input
+          ref={input}
+          type="file"
+          hidden
+          onChange={upload}
+          accept={
+            extension
+              ? extension === "pdf"
+                ? ".pdf"
+                : ".doc,.docx"
+              : undefined
+          }
+        />
+      </div>
+      <Notice
+        error={error || collection.error}
+        loading={collection.loading}
+        onRetry={collection.reload}
+      />
+      {!collection.loading && (
+        <div className="divide-y divide-gray-100">
+          {collection.rows.map((file) => (
+            <div
+              key={file.id}
+              className="flex flex-wrap items-center justify-between gap-3 py-4"
+            >
+              <div className="min-w-0 max-w-full">
+                <p className="break-all font-semibold">{file.originalName}</p>
+                <small className="text-gray-400">
+                  {file.extension} · {(file.size / 1024 / 1024).toFixed(2)} MB
+                </small>
+              </div>
+              <div className="flex items-center gap-4">
+                {!trash && (
+                  <button
+                    className="file-type-button"
+                    onClick={() =>
+                      downloadFile(file).catch((e) => setError(apiMessage(e)))
+                    }
+                  >
+                    Yuklab olish
                   </button>
-                  <div className="flex gap-2">
-                    <button className="grid h-9 w-9 place-items-center rounded-full bg-[#f4f0eb] text-[#c9a77f]" onClick={() => download(file)} title="Yuklash">
-                      <FaDownload className="text-xs" />
-                    </button>
-                    <button className="grid h-9 w-9 place-items-center rounded-full bg-[#fff1f1] text-[#ff1f2f]" onClick={() => remove(file)} title="O'chirish">
-                      <FaTrash className="text-xs" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                )}
+                <RowActions
+                  onArchive={!trash ? () => setRemove(file) : null}
+                  onRestore={
+                    trash
+                      ? async () => {
+                          try {
+                            await api.post(`/api/files/${file.id}/restore`);
+                            collection.reload();
+                          } catch (e) {
+                            setError(apiMessage(e));
+                          }
+                        }
+                      : null
+                  }
+                />
+              </div>
             </div>
-          ) : (
-            <div className="p-8 text-center text-sm text-[#7b8190] dark:text-slate-300">Bu yozuvga hali fayl yuklanmagan.</div>
+          ))}
+          {!collection.rows.length && (
+            <p className="py-8 text-center text-gray-400">
+              Fayllar hali yuklanmagan
+            </p>
           )}
         </div>
-      </div>
+      )}
+      <Pagination {...collection} onChange={collection.setPage} />
+      <ConfirmAction
+        open={!!remove}
+        busy={busy}
+        onClose={() => setRemove(null)}
+        onConfirm={action}
+      />
     </Modal>
   );
 }

@@ -1,20 +1,16 @@
-const projectStatus = {
-  new: ["Yangi", "bg-blue-50 text-blue-700"],
-  in_progress: ["Jarayonda", "bg-amber-50 text-amber-700"],
-  done: ["Tayyor", "bg-green-50 text-green-700"],
-  archived: ["Arxiv", "bg-gray-100 text-gray-600"],
+const labels = {
+  new: "Yangi",
+  in_progress: "Jarayonda",
+  done: "Tayyorlandi",
+  archived: "Arxiv",
+  todo: "Yangi",
+  draft: "Qoralama",
+  active: "Faol",
 };
-
-const taskStatus = {
-  todo: ["Yangi", "bg-blue-50 text-blue-700"],
-  in_progress: ["Jarayonda", "bg-amber-50 text-amber-700"],
-  done: ["Bajarildi", "bg-green-50 text-green-700"],
-  archived: ["Arxiv", "bg-gray-100 text-gray-600"],
-};
-
-export function StatusBadge({ value, type = "project" }) {
-  const source = type === "task" ? taskStatus : projectStatus;
-  const [label, color] = source[value] || [value || "-", "bg-gray-100 text-gray-600"];
-
-  return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${color}`}>{label}</span>;
+export function StatusBadge({ value }) {
+  return (
+    <span className={`status-badge status-${value}`}>
+      {labels[value] || value}
+    </span>
+  );
 }
