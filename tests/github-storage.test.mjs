@@ -76,6 +76,8 @@ const fake = createServer(async (req, res) => {
     const key = segments.slice(4).join("/");
     const file = repo.files.get(key);
     if (req.method === "GET") {
+      if (req.headers.accept !== "application/vnd.github.object+json")
+        return send(415, {});
       if (failReads) return send(503, {});
       if (!file) return send(404, {});
       return send(200, {

@@ -50,7 +50,7 @@ export class GitHubStorageClient {
   }
   async request(
     endpoint,
-    { method = "GET", body, raw = false, missing = false } = {},
+    { method = "GET", body, raw = false, missing = false, accept } = {},
   ) {
     if (method !== "GET") {
       const repo = endpoint.match(/^\/repos\/[^/]+\/([^/]+)\/contents\//)?.[1];
@@ -81,7 +81,7 @@ export class GitHubStorageClient {
           "User-Agent": "ARCHLAB-project-archive",
           Accept: raw
             ? "application/vnd.github.raw+json"
-            : "application/vnd.github+json",
+            : accept || "application/vnd.github+json",
           "X-GitHub-Api-Version": "2026-03-10",
           ...(body ? { "Content-Type": "application/json" } : {}),
         },
@@ -156,7 +156,7 @@ export class GitHubStorageClient {
         "/contents/" +
         file.split("/").map(encodeURIComponent).join("/") +
         (ref ? "?ref=" + encodeURIComponent(ref) : ""),
-      { missing: true },
+      { missing: true, accept: "application/vnd.github.object+json" },
     );
   }
   async put(repo, file, buffer, message) {
