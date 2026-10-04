@@ -11,7 +11,10 @@ import {
 import { upload } from "../middleware/upload.js";
 import { File } from "../models/File.js";
 import { config } from "../config.js";
-import { badRequest, notFound, forbidden } from "../utils/apiError.js";
+import { enqueue, eligibleFile, downloadPath } from "../storage/github.js";
+import { MAX_GITHUB_FILE_BYTES } from "../storage/github-client.js";
+import { ApiError } from "../utils/apiError.js";
+import { badRequest } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { writeAudit } from "../utils/audit.js";
 import { getPagination, paged } from "../utils/pagination.js";
@@ -117,6 +120,16 @@ filesRouter.post(
       if (data.entityType === "conversations")
         data.conversation = data.entityId;
       await fileAccess(req.user, data, true);
+      if (
+        config.github.enabled &&
+        eligibleFile(data) &&
+        req.file.size > MAX_GITHUB_FILE_BYTES
+      )
+        throw new ApiError(
+          413,
+          "Loyiha arxivi uchun fayl 95 MB dan oshmasligi kerak",
+          "FILE_TOO_LARGE",
+        );
       const handle = await fs.open(req.file.path, "r");
       const bytes = Buffer.alloc(8);
       await handle.read(bytes, 0, 8, 0);
@@ -138,10 +151,16 @@ filesRouter.post(
         extension: ext,
         size: req.file.size,
         uploadedBy: req.user.id,
+        ...(config.github.enabled && eligibleFile(data)
+          ? { github: { status: "pending" } }
+          : {}),
       });
       await writeAudit(req, "upload", "File", file._id, {
         originalName: file.originalName,
-      });
+      }).catch(() =>
+        console.warn("Upload audit write deferred; persisted file retained"),
+      );
+      if (eligibleFile(file)) await enqueue("file", file).catch(() => {});
       res.status(201).json(file.toPublic());
     } catch (error) {
       await fs.unlink(req.file.path).catch(() => {});
@@ -160,12 +179,15 @@ filesRouter.get(
   "/:id/download",
   asyncHandler(async (req, res) => {
     const file = await fileFor(req.user, req.params.id);
-    const resolved = path.resolve(file.path);
-    if (!resolved.startsWith(config.uploadDir + path.sep)) throw forbidden();
+    let resolved;
     try {
-      await fs.access(resolved);
-    } catch {
-      throw notFound("Fayl diskda topilmadi");
+      resolved = await downloadPath(file);
+    } catch (e) {
+      throw new ApiError(
+        e.code === "FILE_NOT_AVAILABLE" ? 404 : 503,
+        "Faylni hozir yuklab bo'lmadi. Iltimos, qayta urinib ko'ring.",
+        "DOWNLOAD_UNAVAILABLE",
+      );
     }
     await writeAudit(req, "download", "File", file._id);
     res.download(resolved, file.originalName);

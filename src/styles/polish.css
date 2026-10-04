@@ -1553,3 +1553,31 @@ textarea:disabled {
     left: 0;
   }
 }
+
+.backup-status {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+.backup-synced {
+  color: var(--success-text);
+}
+.backup-error {
+  color: var(--danger-text);
+}
+.storage-statistics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.storage-statistics dt {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.storage-statistics dd {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}

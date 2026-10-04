@@ -7,6 +7,7 @@ if (!mongo.startsWith("mongodb://127.0.0.1:27021/"))
 const env = {
   ...process.env,
   NODE_ENV: "development",
+  GITHUB_STORAGE_ENABLED: "false",
   MONGODB_URI: mongo,
   JWT_SECRET: crypto.randomBytes(48).toString("hex"),
   HOST: "127.0.0.1",
@@ -47,23 +48,27 @@ const wait = async (url) => {
   throw new Error("Test service did not start");
 };
 try {
-  start(["beckend/server.js"]);
-  start([
-    "node_modules/vite/bin/vite.js",
-    "--host",
-    "127.0.0.1",
-    "--port",
-    "5174",
-  ]);
-  await Promise.all([
-    wait("http://127.0.0.1:4031/api/health"),
-    wait("http://127.0.0.1:5174"),
-  ]);
-  if (!process.argv.includes("--polish-only")) {
-    await run(["--test", "tests/api.test.mjs"]);
-    await run(["tests/staging-browser.mjs"]);
+  await run(["tests/github-storage.test.mjs"]);
+  if (process.argv.includes("--storage-only")) process.exitCode = 0;
+  else {
+    start(["beckend/server.js"]);
+    start([
+      "node_modules/vite/bin/vite.js",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "5174",
+    ]);
+    await Promise.all([
+      wait("http://127.0.0.1:4031/api/health"),
+      wait("http://127.0.0.1:5174"),
+    ]);
+    if (!process.argv.includes("--polish-only")) {
+      await run(["--test", "tests/api.test.mjs"]);
+      await run(["tests/staging-browser.mjs"]);
+    }
+    await run(["tests/ui-polish.test.mjs"]);
   }
-  await run(["tests/ui-polish.test.mjs"]);
 } finally {
   for (const child of children) child.kill("SIGTERM");
 }

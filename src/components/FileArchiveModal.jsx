@@ -1,3 +1,4 @@
+import { FileBackupStatus } from "./FileBackupStatus";
 import { useEffect, useRef, useState } from "react";
 import { api, apiMessage } from "../api/client";
 import { Button } from "./Button";
@@ -44,6 +45,7 @@ function ArchiveContent({
     [busy, setBusy] = useState(false),
     [remove, setRemove] = useState(null),
     [trash, setTrash] = useState(false),
+    [capabilities, setCapabilities] = useState(null),
     collection = useCollection("/api/files", {
       entityType,
       entityId,
@@ -51,6 +53,22 @@ function ArchiveContent({
       trash,
       extension,
     });
+  useEffect(() => {
+    if (
+      !open ||
+      !collection.rows.some((f) => f.storage && f.storage.status !== "synced")
+    )
+      return;
+    const timer = setInterval(collection.reload, 15000);
+    return () => clearInterval(timer);
+  }, [open, collection.rows, collection.reload]);
+  useEffect(() => {
+    if (open)
+      api
+        .get("/api/storage/capabilities")
+        .then(({ data }) => setCapabilities(data))
+        .catch(() => {});
+  }, [open]);
   const upload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -120,6 +138,12 @@ function ArchiveContent({
           }
         />
       </div>
+      {capabilities?.enabled && project && (
+        <p className="text-gray-500 mb-3 text-xs">
+          Fayl avval serverda saqlanadi, keyin zaxiralanadi. Maksimum:{" "}
+          {capabilities.maxFileSizeMb} MB.
+        </p>
+      )}
       <Notice
         error={error || collection.error}
         loading={collection.loading}
@@ -134,6 +158,7 @@ function ArchiveContent({
             >
               <div className="min-w-0 max-w-full">
                 <p className="break-all font-semibold">{file.originalName}</p>
+                <FileBackupStatus file={file} />
                 <small className="text-gray-400">
                   {file.extension} · {(file.size / 1024 / 1024).toFixed(2)} MB
                 </small>

@@ -30,6 +30,17 @@ export const config = {
     .map((origin) => origin.trim())
     .filter(Boolean),
   uploadDir: path.resolve(process.env.UPLOAD_DIR || "uploads"),
+  github: {
+    baseUrl:
+      process.env.NODE_ENV === "production"
+        ? "https://api.github.com"
+        : process.env.GITHUB_STORAGE_API_BASE_URL || "https://api.github.com",
+    enabled: process.env.GITHUB_STORAGE_ENABLED === "true",
+    owner: process.env.GITHUB_STORAGE_OWNER || "ARCHLAB-di",
+    tokenFile:
+      process.env.GITHUB_STORAGE_TOKEN_FILE || "/etc/archlab/github-token",
+    cacheHours: Math.max(1, number(process.env.GITHUB_STORAGE_CACHE_HOURS, 24)),
+  },
   maxUploadSizeMb: number(process.env.MAX_UPLOAD_SIZE_MB, 0),
 };
 

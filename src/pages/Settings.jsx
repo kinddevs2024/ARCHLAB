@@ -1,3 +1,4 @@
+import { GitHubStorageCard } from "../components/GitHubStorageCard";
 import { useEffect, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { api, apiMessage } from "../api/client";
@@ -215,6 +216,7 @@ export default function Settings() {
               <option value="system">Tizim sozlamasi</option>
             </Select>
           </section>
+          {hasRole("Admin") && <GitHubStorageCard />}
           {hasRole("Admin") && (
             <form
               className="settings-card form-grid"

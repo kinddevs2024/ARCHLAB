@@ -18,6 +18,7 @@ import {
   yearFilter,
 } from "../utils/validation.js";
 import { getPagination, paged } from "../utils/pagination.js";
+import { enqueue } from "../storage/github.js";
 import { writeAudit } from "../utils/audit.js";
 import { createNotification } from "../utils/notify.js";
 export function resourceRouter({
@@ -214,6 +215,7 @@ export function resourceRouter({
         project: project ? item._id : item.project,
         recipientIds: item.assignee ? [item.assignee] : item.assignedTo || [],
       });
+      if (type === "Project") await enqueue("project", item).catch(() => {});
       res.status(201).json(publicItem(item, req.user));
     }),
   );
@@ -257,6 +259,7 @@ export function resourceRouter({
       await writeAudit(req, "update", type, item._id, {
         fields: Object.keys(data),
       });
+      if (type === "Project") await enqueue("project", item).catch(() => {});
       res.json(publicItem(item, req.user));
     }),
   );
@@ -283,6 +286,7 @@ export function resourceRouter({
       item.deletedBy = null;
       await item.save();
       await writeAudit(req, "restore", type, item._id);
+      if (type === "Project") await enqueue("project", item).catch(() => {});
       res.json(publicItem(item, req.user));
     }),
   );

@@ -2,6 +2,19 @@ import mongoose from "mongoose";
 
 const fileSchema = new mongoose.Schema(
   {
+    github: {
+      status: { type: String, enum: ["pending", "syncing", "synced", "error"] },
+      owner: String,
+      repository: String,
+      remotePath: String,
+      blobSha: String,
+      commitSha: String,
+      sha256: String,
+      verifiedAt: Date,
+      cachedAt: Date,
+      cacheEvictUntil: Date,
+      lastError: String,
+    },
     deletedAt: { type: Date, default: null, index: true },
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     originalName: { type: String, required: true },
@@ -37,6 +50,13 @@ fileSchema.methods.toPublic = function toPublic() {
   delete data.__v;
   delete data.path;
   delete data.storedName;
+  if (data.github?.status)
+    data.storage = {
+      provider: "github",
+      status: data.github.status,
+      syncedAt: data.github.verifiedAt,
+    };
+  delete data.github;
   return data;
 };
 

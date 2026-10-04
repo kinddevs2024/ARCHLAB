@@ -1,3 +1,4 @@
+import { FileBackupStatus } from "../components/FileBackupStatus";
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { api, apiMessage } from "../api/client";
@@ -24,6 +25,11 @@ export default function Files() {
       trash,
       id: params.get("file") || undefined,
     });
+  useEffect(() => {
+    if (!c.rows.some((f) => f.storage && f.storage.status !== "synced")) return;
+    const timer = setInterval(c.reload, 15000);
+    return () => clearInterval(timer);
+  }, [c.rows, c.reload]);
   const fileId = params.get("file");
   useEffect(() => {
     if (!fileId) return;
@@ -89,6 +95,7 @@ export default function Files() {
                 <button className="record-link" onClick={() => setViewing(f)}>
                   {f.originalName}
                 </button>
+                <FileBackupStatus file={f} />
                 {f.project && (
                   <Link
                     className="block text-xs opacity-60"
