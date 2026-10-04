@@ -63,11 +63,15 @@ try {
       wait("http://127.0.0.1:4031/api/health"),
       wait("http://127.0.0.1:5174"),
     ]);
-    if (!process.argv.includes("--polish-only")) {
+    if (process.argv.includes("--analytics-only"))
+      await run(["tests/analytics.test.mjs"]);
+    else if (!process.argv.includes("--polish-only")) {
       await run(["--test", "tests/api.test.mjs"]);
+      await run(["tests/analytics.test.mjs"]);
       await run(["tests/staging-browser.mjs"]);
     }
-    await run(["tests/ui-polish.test.mjs"]);
+    if (!process.argv.includes("--analytics-only"))
+      await run(["tests/ui-polish.test.mjs"]);
   }
 } finally {
   for (const child of children) child.kill("SIGTERM");

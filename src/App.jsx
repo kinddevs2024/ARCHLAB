@@ -2,6 +2,7 @@ import Documents from "./pages/Documents";
 import Tasks from "./pages/Tasks";
 import Files from "./pages/Files";
 import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { AppLayout } from "./layouts/AppLayout";
@@ -53,6 +54,7 @@ function App() {
             element={<Projects title="Rendr" category="render" />}
           />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/files" element={<Files />} />
           <Route

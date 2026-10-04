@@ -18,6 +18,7 @@ import { FigmaIcon } from "../components/Workspace";
 import { RealtimeProvider } from "../context/RealtimeContext";
 import assets from "../figma-assets.json";
 const items = [
+  ["/analytics", "Analitika", null],
   ["/projects", "Loyihalar", "imgIcnSidebarProjectsInactive"],
   [
     "/projects/single",
@@ -171,7 +172,7 @@ export function AppLayout() {
                       <FaReceipt />
                     ) : to === "/tasks" ? (
                       <FaTasks />
-                    ) : to === "/dashboard" ? (
+                    ) : ["/dashboard", "/analytics"].includes(to) ? (
                       <FaChartPie />
                     ) : (
                       <FaFolderOpen />

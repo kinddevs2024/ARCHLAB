@@ -7,6 +7,7 @@ import cors from "cors";
 import express from "express";
 import { config } from "./config.js";
 import { connectDb } from "./db.js";
+import { analyticsRouter } from "./routes/analytics.js";
 import { auditRouter } from "./routes/audit.js";
 import { authRouter } from "./routes/auth.js";
 import { chatRouter } from "./routes/chat.js";
@@ -89,6 +90,7 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/profile", profileRouter);
 app.use("/api/audit", auditRouter);
+app.use("/api/analytics", analyticsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

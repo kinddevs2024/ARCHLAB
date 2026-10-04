@@ -21,6 +21,8 @@ const taskSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+taskSchema.index({ project: 1, deletedAt: 1, status: 1 });
+
 taskSchema.methods.toPublic = function toPublic() {
   const data = this.toObject();
   data.id = data._id.toString();

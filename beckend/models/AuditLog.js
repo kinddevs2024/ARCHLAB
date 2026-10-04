@@ -12,6 +12,8 @@ const auditLogSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+auditLogSchema.index({ createdAt: -1, _id: -1 });
+
 auditLogSchema.methods.toPublic = function toPublic() {
   const data = this.toObject();
   data.id = data._id.toString();

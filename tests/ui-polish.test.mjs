@@ -503,6 +503,7 @@ try {
     "/projects/render",
     "/projects/" + project.id,
     "/dashboard",
+    "/analytics",
     "/tasks",
     "/contracts",
     "/expenses",

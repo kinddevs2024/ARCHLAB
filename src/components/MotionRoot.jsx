@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { animate, createScope, stagger } from "animejs";
 
 const entrance =
-  '.workspace-content, .login-form, .global-search-results, [data-ui="select-menu"], [data-ui="feedback"], .message, .dashboard-cards > *, .settings-grid > *, .empty-state, .workspace-table tbody';
+  '.workspace-content, .login-form, .global-search-results, [data-ui="select-menu"], [data-ui="feedback"], .message, .dashboard-cards > *, .settings-grid > *, .empty-state, .workspace-table tbody, .analytics-kpis > *, .analytics-overview > *, .analytics-feed > li';
 
 export function MotionRoot({ children }) {
   const root = useRef(null);

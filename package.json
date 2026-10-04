@@ -15,7 +15,8 @@
     "test:api": "node --test tests/api.test.mjs",
     "test:integration": "node tests/run-integration.mjs",
     "storage:worker": "node beckend/storage/worker.js",
-    "test:storage": "node tests/run-integration.mjs --storage-only"
+    "test:storage": "node tests/run-integration.mjs --storage-only",
+    "test:analytics": "node tests/run-integration.mjs --analytics-only"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
