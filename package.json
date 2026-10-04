@@ -23,6 +23,8 @@
     "@fontsource/plus-jakarta-sans": "^5.3.0",
     "@fontsource/poppins": "^5.3.0",
     "@fontsource/work-sans": "^5.3.0",
+    "@material-tailwind/react": "2.1.10",
+    "animejs": "4.5.0",
     "axios": "^1.7.7",
     "bcryptjs": "^3.0.3",
     "concurrently": "^9.2.1",
@@ -62,6 +64,10 @@
   "overrides": {
     "exceljs": {
       "uuid": "^11.1.1"
+    },
+    "@material-tailwind/react": {
+      "react": "$react",
+      "react-dom": "$react-dom"
     }
   }
 }

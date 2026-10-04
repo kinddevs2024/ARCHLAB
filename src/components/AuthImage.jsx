@@ -1,3 +1,4 @@
+import { Avatar } from "@material-tailwind/react/components/Avatar/index.js";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 
@@ -41,8 +42,9 @@ export function AuthImage({
     };
   }, [src]);
 
+  const Image = className.includes("message-image") ? "img" : Avatar;
   return (
-    <img
+    <Image
       src={objectUrl || fallback}
       alt={alt}
       className={className}

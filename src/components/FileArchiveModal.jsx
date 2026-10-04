@@ -1,3 +1,5 @@
+import { Meter, Feedback } from "./DesignSystem";
+import { Action } from "./Button";
 import { FileBackupStatus } from "./FileBackupStatus";
 import { useEffect, useRef, useState } from "react";
 import { api, apiMessage } from "../api/client";
@@ -43,6 +45,8 @@ function ArchiveContent({
   const input = useRef(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
+    [progress, setProgress] = useState(null),
+    [success, setSuccess] = useState(""),
     [remove, setRemove] = useState(null),
     [trash, setTrash] = useState(false),
     [capabilities, setCapabilities] = useState(null),
@@ -74,6 +78,8 @@ function ArchiveContent({
     if (!file) return;
     setBusy(true);
     setError("");
+    setSuccess("");
+    setProgress(0);
     const data = new FormData();
     for (const [key, value] of Object.entries({
       entityType,
@@ -86,13 +92,22 @@ function ArchiveContent({
       if (value) data.append(key, value);
     data.append("file", file);
     try {
-      await api.post("/api/files", data);
+      await api.post("/api/files", data, {
+        onUploadProgress: (event) => {
+          if (event.total)
+            setProgress(
+              Math.min(100, Math.round((event.loaded / event.total) * 100)),
+            );
+        },
+      });
+      setSuccess("Fayl saqlandi");
       collection.reload();
     } catch (e) {
       setError(apiMessage(e));
     } finally {
       setBusy(false);
-      input.current.value = "";
+      setProgress(null);
+      if (input.current) input.current.value = "";
     }
   };
   const action = async () => {
@@ -144,6 +159,13 @@ function ArchiveContent({
           {capabilities.maxFileSizeMb} MB.
         </p>
       )}
+      {progress !== null && (
+        <div className="upload-progress" role="status">
+          <p>Fayl yuklanmoqda · {progress}%</p>
+          <Meter value={progress} label="Fayl yuklanishi" />
+        </div>
+      )}
+      {success && <Feedback kind="success">{success}</Feedback>}
       <Notice
         error={error || collection.error}
         loading={collection.loading}
@@ -165,14 +187,14 @@ function ArchiveContent({
               </div>
               <div className="flex items-center gap-4">
                 {!trash && (
-                  <button
+                  <Action
                     className="file-type-button"
                     onClick={() =>
                       downloadFile(file).catch((e) => setError(apiMessage(e)))
                     }
                   >
                     Yuklab olish
-                  </button>
+                  </Action>
                 )}
                 <RowActions
                   onArchive={

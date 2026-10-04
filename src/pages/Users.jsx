@@ -1,3 +1,6 @@
+import { Surface, Title } from "../components/DesignSystem";
+import { Field, Checkbox } from "../components/Input";
+import { Action } from "../components/Button";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -115,17 +118,17 @@ export default function Users() {
   return (
     <div>
       <div className="page-heading">
-        <h1>Foydalanuvchilar</h1>
+        <Title>Foydalanuvchilar</Title>
         <Button onClick={() => edit(null)}>Xodim qo'shish</Button>
       </div>
-      <div className="filter-bar">
-        <input
+      <Surface className="filter-bar">
+        <Field
           aria-label="Xodim qidirish"
           placeholder="Qidirish"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </div>
+      </Surface>
       <Notice
         error={c.error || (!open ? error : "")}
         loading={c.loading}
@@ -152,9 +155,9 @@ export default function Users() {
                     alt=""
                     className="h-9 w-9 rounded-full object-cover"
                   />
-                  <button className="record-link" onClick={() => setViewing(u)}>
+                  <Action className="record-link" onClick={() => setViewing(u)}>
                     {u.name} {u.surname}
-                  </button>
+                  </Action>
                 </div>
               </td>
               <td>{u.position || "—"}</td>
@@ -217,7 +220,7 @@ export default function Users() {
                   <FigmaIcon screen="employee-form" name="imgGroup3" />
                 </span>
               )}
-              <button
+              <Action
                 type="button"
                 aria-label="Xodim rasmini tanlash"
                 onClick={() => input.current.click()}
@@ -227,7 +230,7 @@ export default function Users() {
                   <FigmaIcon screen="employee-form" name="imgGroup5" />
                   <FigmaIcon screen="employee-form" name="imgGroup6" />
                 </span>
-              </button>
+              </Action>
               <input
                 ref={input}
                 hidden
@@ -330,14 +333,12 @@ export default function Users() {
             />
           </div>
           {editing && editing !== user.id && (
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={form.active}
-                onChange={(e) => setForm({ ...form, active: e.target.checked })}
-              />
-              Kirishga ruxsat berish
-            </label>
+            <Checkbox
+              wrapperClassName="flex items-center gap-3"
+              checked={form.active}
+              onChange={(e) => setForm({ ...form, active: e.target.checked })}
+              label={<>Kirishga ruxsat berish</>}
+            />
           )}
           <Button type="submit" disabled={busy} className="justify-self-end">
             {busy ? "Saqlanmoqda..." : editing ? "Saqlash" : "Qo'shish"}

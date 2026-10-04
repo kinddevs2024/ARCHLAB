@@ -13,9 +13,11 @@ export const applyTheme = (theme) => {
     mode === "dark" ||
     (mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
   const root = document.documentElement;
+  const changed = root.classList.contains("dark") !== dark;
   root.classList.toggle("dark", dark);
   root.dataset.theme = mode;
   root.style.colorScheme = dark ? "dark" : "light";
+  if (changed) window.dispatchEvent(new Event("archlab:theme"));
   try {
     localStorage.setItem("theme", mode);
   } catch {

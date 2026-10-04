@@ -1,3 +1,4 @@
+import { Surface, Title } from "../components/DesignSystem";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaFolderOpen, FaTasks, FaFile, FaUsers } from "react-icons/fa";
@@ -44,7 +45,7 @@ export default function Dashboard() {
   return (
     <div>
       <div className="page-heading">
-        <h1>Dashboard</h1>
+        <Title>Dashboard</Title>
       </div>
       <p className="mb-6 text-gray-500">
         Sizga ochiq bo'lgan loyihalar va ish jarayonlari.
@@ -57,10 +58,12 @@ export default function Dashboard() {
       {!loading && !error && (
         <div className="dashboard-cards">
           {cards.map(([label, type, Icon]) => (
-            <Link to={`/${type}`} className="settings-card" key={type}>
-              <Icon className="mb-4 text-2xl text-[#C6A47E]" />
-              <p>{label}</p>
-              <strong className="block mt-2 text-3xl">{stats[type]}</strong>
+            <Link to={`/${type}`} className="dashboard-card-link" key={type}>
+              <Surface className="settings-card">
+                <Icon className="mb-4 text-2xl text-[#C6A47E]" />
+                <p>{label}</p>
+                <strong className="block mt-2 text-3xl">{stats[type]}</strong>
+              </Surface>
             </Link>
           ))}
         </div>

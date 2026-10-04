@@ -1,3 +1,4 @@
+import { selectMaterial } from "./material-select.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -116,6 +117,8 @@ try {
   });
   const a = await ownerContext.newPage(),
     b = await userContext.newPage();
+  monitor(a);
+  monitor(b);
   await a.goto("http://127.0.0.1:5174/login");
   await a.getByRole("heading", { name: "Xush kelibsiz" }).waitFor();
   await screenshot(a, "login");
@@ -125,12 +128,14 @@ try {
   await dialog
     .getByLabel("Mijoz ismi", { exact: true })
     .fill("Alisher Karimov");
-  await dialog
-    .getByLabel("Yordamchi ismi", { exact: true })
-    .selectOption(String(user._id));
-  await dialog
-    .getByLabel("Ustaning ismi", { exact: true })
-    .selectOption(String(user._id));
+  await selectMaterial(
+    dialog.getByLabel("Yordamchi ismi", { exact: true }),
+    String(user._id),
+  );
+  await selectMaterial(
+    dialog.getByLabel("Ustaning ismi", { exact: true }),
+    String(user._id),
+  );
   await dialog
     .getByLabel("Proyekt haqida")
     .fill("Figma bo‘yicha arxitektura loyihasi");
@@ -146,7 +151,7 @@ try {
   await dialog
     .getByLabel("Obyekt joyi", { exact: true })
     .fill("Toshkent shahri");
-  await dialog.getByLabel("Status", { exact: true }).selectOption("done");
+  await selectMaterial(dialog.getByLabel("Status", { exact: true }), "done");
   await dialog
     .getByRole("button", { name: "Loyiha yaratish", exact: true })
     .click();
@@ -218,7 +223,7 @@ try {
   });
   assert.equal(contract.status, 201, JSON.stringify(contract));
   await a.goto(`http://127.0.0.1:5174/projects/${project._id}`);
-  await a.getByRole("button", { name: "Shartnoma", exact: true }).click();
+  await a.getByRole("tab", { name: "Shartnoma", exact: true }).click();
   await a.getByText("Arxitektura shartnomasi", { exact: true }).waitFor();
   await screenshot(a, "contracts");
   let exportResult = await a.evaluate(async (id) => {
@@ -410,9 +415,10 @@ try {
     await form
       .getByLabel("Nomi", { exact: true })
       .fill(route === "letters" ? "Ruxsatnoma xati" : "Ish boshlash buyrug‘i");
-    await form
-      .getByLabel("Loyiha", { exact: true })
-      .selectOption(String(project._id));
+    await selectMaterial(
+      form.getByLabel("Loyiha", { exact: true }),
+      String(project._id),
+    );
     await form.getByRole("button", { name: "Saqlash", exact: true }).click();
     await form.waitFor({ state: "hidden" });
     await a
@@ -425,7 +431,7 @@ try {
   }
   report.push("Letter/order creation through forms and persisted records");
   await a.goto(`http://127.0.0.1:5174/projects/${project._id}`);
-  await a.getByRole("button", { name: "Xarajatlar", exact: true }).click();
+  await a.getByRole("tab", { name: "Xarajatlar", exact: true }).click();
   await a.getByRole("button", { name: "Yangi", exact: true }).click();
   const expenseForm = a.getByRole("dialog");
   await expenseForm.getByLabel("Nomi", { exact: true }).fill("Eskiz xarajati");
@@ -526,10 +532,10 @@ try {
     await screenshot(a, route);
   }
   await a.goto("http://127.0.0.1:5174/settings");
-  await a.getByLabel("Tema", { exact: true }).selectOption("dark");
+  await selectMaterial(a.getByLabel("Tema", { exact: true }), "dark");
   await a.locator("html.dark").waitFor();
   await screenshot(a, "settings-dark");
-  await a.getByLabel("Tema", { exact: true }).selectOption("light");
+  await selectMaterial(a.getByLabel("Tema", { exact: true }), "light");
   await a.setViewportSize({ width: 390, height: 844 });
   for (const route of ["projects", "tasks", "users", "settings", "chat"]) {
     await a.goto("http://127.0.0.1:5174/" + route);

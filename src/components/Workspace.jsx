@@ -1,3 +1,6 @@
+import { Feedback, Loading } from "./DesignSystem";
+import { SegmentGroup } from "./DesignSystem";
+import { Action, IconButton } from "./Button";
 import { useState } from "react";
 import {
   FaChevronLeft,
@@ -18,21 +21,16 @@ export function FigmaIcon({ name, screen = "projects" }) {
 export function Notice({ error, loading, onRetry }) {
   if (error)
     return (
-      <div role="alert" className="notice-error">
+      <Feedback className="notice-error">
         {error}
         {onRetry && (
           <Button variant="secondary" onClick={onRetry}>
             Qayta urinish
           </Button>
         )}
-      </div>
+      </Feedback>
     );
-  if (loading)
-    return (
-      <p role="status" className="loading-state">
-        Yuklanmoqda...
-      </p>
-    );
+  if (loading) return <Loading />;
   return null;
 }
 export function Pagination({ meta, page, onChange, loading }) {
@@ -63,26 +61,26 @@ export function YearFilter({ value, onChange }) {
   const current = new Date().getFullYear(),
     [start, setStart] = useState(current - 5);
   return (
-    <div className="year-filter" aria-label="Yil bo'yicha filter">
-      <button aria-label="Oldingi yillar" onClick={() => setStart(start - 6)}>
+    <SegmentGroup className="year-filter" aria-label="Yil bo'yicha filter">
+      <Action aria-label="Oldingi yillar" onClick={() => setStart(start - 6)}>
         <FaChevronLeft />
-      </button>
-      <button className={!value ? "selected" : ""} onClick={() => onChange("")}>
+      </Action>
+      <Action className={!value ? "selected" : ""} onClick={() => onChange("")}>
         Barchasi
-      </button>
+      </Action>
       {Array.from({ length: 6 }, (_, i) => start + i).map((year) => (
-        <button
+        <Action
           key={year}
           className={Number(value) === year ? "selected" : ""}
           onClick={() => onChange(String(year))}
         >
           {year}
-        </button>
+        </Action>
       ))}
-      <button aria-label="Keyingi yillar" onClick={() => setStart(start + 6)}>
+      <Action aria-label="Keyingi yillar" onClick={() => setStart(start + 6)}>
         <FaChevronRight />
-      </button>
-    </div>
+      </Action>
+    </SegmentGroup>
   );
 }
 export function ConfirmAction({
@@ -122,34 +120,37 @@ export function RowActions({ onEdit, onArchive, onRestore }) {
   return (
     <div className="row-actions">
       {onEdit && (
-        <button
+        <IconButton
           className="row-edit"
           title="Tahrirlash"
+          tooltip="Tahrirlash"
           aria-label="Tahrirlash"
           onClick={onEdit}
         >
           <FaPen />
-        </button>
+        </IconButton>
       )}
       {onArchive && (
-        <button
+        <IconButton
           className="row-delete"
           title="Arxivlash"
+          tooltip="Arxivlash"
           aria-label="Arxivlash"
           onClick={onArchive}
         >
           <FaTrash />
-        </button>
+        </IconButton>
       )}
       {onRestore && (
-        <button
+        <IconButton
           className="row-edit"
           title="Tiklash"
+          tooltip="Tiklash"
           aria-label="Tiklash"
           onClick={onRestore}
         >
           <FaUndo />
-        </button>
+        </IconButton>
       )}
     </div>
   );

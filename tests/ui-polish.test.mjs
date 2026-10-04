@@ -1,3 +1,4 @@
+import { selectMaterial } from "./material-select.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -57,7 +58,7 @@ const shot = async (name) => {
 };
 const go = async (route) => {
   await a.goto("http://127.0.0.1:5174" + route);
-  await a.locator("h1").waitFor();
+  await a.locator("h1").waitFor({ state: "attached" });
   await a
     .locator(".loading-state")
     .waitFor({ state: "hidden" })
@@ -347,7 +348,7 @@ try {
   // Persisted theme, system theme updates, multi-tab and failed save rollback.
   await go("/settings");
   const theme = a.getByLabel("Tema", { exact: true });
-  await theme.selectOption("dark");
+  await selectMaterial(theme, "dark");
   await a.waitForFunction(
     () =>
       document.documentElement.classList.contains("dark") &&
@@ -361,17 +362,17 @@ try {
       bg: getComputedStyle(el).backgroundColor,
       text: getComputedStyle(el).color,
     }));
-  assert.equal(colors.bg, "rgb(32, 38, 46)");
-  assert.equal(colors.text, "rgb(232, 237, 244)");
+  assert.equal(colors.bg, "rgb(27, 35, 45)");
+  assert.equal(colors.text, "rgb(237, 242, 248)");
   await a.reload();
   await theme.waitFor();
-  assert.equal(await theme.inputValue(), "dark");
+  assert.match(await theme.innerText(), /Qorong'i/);
   const other = await context.newPage();
   await other.goto("http://127.0.0.1:5174/projects");
   await other
     .getByRole("heading", { name: "Loyihalar", exact: true })
     .waitFor();
-  await theme.selectOption("light");
+  await selectMaterial(theme, "light");
   await a.waitForFunction(
     () => !document.querySelector(".theme-toggle").disabled,
   );
@@ -379,7 +380,7 @@ try {
     () => !document.documentElement.classList.contains("dark"),
   );
   await other.close();
-  await theme.selectOption("system");
+  await selectMaterial(theme, "system");
   await a.waitForFunction(
     () => !document.querySelector(".theme-toggle").disabled,
   );
@@ -397,15 +398,15 @@ try {
       body: JSON.stringify({ message: "Tema saqlanmadi" }),
     }),
   );
-  await theme.selectOption("dark");
+  await selectMaterial(theme, "dark");
   await a.getByRole("alert").filter({ hasText: "Tema saqlanmadi" }).waitFor();
-  assert.equal(await theme.inputValue(), "system");
+  assert.match(await theme.innerText(), /Tizim sozlamasi/);
   assert.equal(
     await a.evaluate(() => document.documentElement.classList.contains("dark")),
     false,
   );
   await a.unroute("**/api/profile/preferences");
-  await theme.selectOption("dark");
+  await selectMaterial(theme, "dark");
   await a.waitForFunction(
     () => !document.querySelector(".theme-toggle").disabled,
   );
@@ -490,6 +491,92 @@ try {
   checks.push(
     "Mobile 360/390/768: search visible, dialogs fit, no page overflow; hover/pressed feedback, trapped focus, reduced-motion disables animation",
   );
+
+  await a.emulateMedia({ reducedMotion: "no-preference" });
+  const routes = [
+    "/projects",
+    "/projects/single",
+    "/projects/interior",
+    "/projects/tex-obs",
+    "/projects/laboratory",
+    "/projects/control",
+    "/projects/render",
+    "/projects/" + project.id,
+    "/dashboard",
+    "/tasks",
+    "/contracts",
+    "/expenses",
+    "/letters",
+    "/orders",
+    "/files",
+    "/users",
+    "/notifications",
+    "/settings",
+    "/chat",
+  ];
+  const matrix = [];
+  for (const mode of ["light", "dark"]) {
+    assert.equal(
+      (await api("/profile/preferences", "PATCH", { theme: mode })).status,
+      200,
+    );
+    for (const width of [1440, 360, 390, 768]) {
+      await a.setViewportSize({ width, height: 900 });
+      for (const route of routes) {
+        await go(route);
+        await a.evaluate(() => document.fonts.ready);
+        await a.waitForTimeout(250);
+        const dimensions = await a.evaluate(() => ({
+          scroll: document.documentElement.scrollWidth,
+          client: document.documentElement.clientWidth,
+        }));
+        assert(
+          dimensions.scroll <= dimensions.client + 1,
+          mode +
+            " " +
+            width +
+            " " +
+            route +
+            " overflow: " +
+            JSON.stringify(dimensions),
+        );
+        assert.equal(
+          await a
+            .locator("html")
+            .evaluate((el) => el.classList.contains("dark")),
+          mode === "dark",
+        );
+        assert.equal(await a.getByRole("heading", { level: 1 }).count(), 1);
+        if (route !== "/chat")
+          assert.equal(
+            (await a.locator("[data-ui=surface]").count()) > 0,
+            true,
+            route + " missing shared surface",
+          );
+        matrix.push({ mode, width, route });
+        if (
+          width === 1440 ||
+          (width === 390 &&
+            ["/users", "/settings", "/chat", "/tasks"].includes(route))
+        )
+          await shot(
+            "material-" + mode + "-" + width + "-" + route.replaceAll("/", "_"),
+          );
+      }
+    }
+  }
+  await fs.writeFile(
+    path.resolve("test-artifacts/material-matrix.json"),
+    JSON.stringify(
+      { passed: true, routes: routes.length, cases: matrix.length, matrix },
+      null,
+      2,
+    ),
+  );
+  checks.push(
+    "Material UI: every route in both themes at 1440/360/390/768, no document overflow, real library surfaces and controls",
+  );
+
   assert.deepEqual(errors, []);
   await fs.writeFile(
     path.resolve("test-artifacts/polish-report.json"),

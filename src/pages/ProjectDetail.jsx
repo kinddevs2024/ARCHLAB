@@ -1,3 +1,6 @@
+import { TabBar } from "../components/DesignSystem";
+import { Surface, Title } from "../components/DesignSystem";
+import { Action } from "../components/Button";
 import { useEffect, useState } from "react";
 import {
   Link,
@@ -172,7 +175,7 @@ export default function ProjectDetail() {
         )}
       </nav>
       <div className="page-heading">
-        <h1>{folderId ? parent?.title : project?.title || "Loyiha"}</h1>
+        <Title>{folderId ? parent?.title : project?.title || "Loyiha"}</Title>
         {tab === "folders" && (
           <div className="heading-actions">
             <Button
@@ -193,32 +196,21 @@ export default function ProjectDetail() {
         )}
       </div>
       {!folderId && hasRole("Manager") && (
-        <div className="tabs">
-          <button
-            className={tab === "folders" ? "active" : ""}
-            onClick={() => setTab("folders")}
-          >
-            Papkalar
-          </button>
-          <button
-            className={tab === "contracts" ? "active" : ""}
-            onClick={() => setTab("contracts")}
-          >
-            Shartnoma
-          </button>
-          <button
-            className={tab === "expenses" ? "active" : ""}
-            onClick={() => setTab("expenses")}
-          >
-            Xarajatlar
-          </button>
-        </div>
+        <TabBar
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "folders", label: "Papkalar" },
+            { value: "contracts", label: "Shartnoma" },
+            { value: "expenses", label: "Xarajatlar" },
+          ]}
+        />
       )}
       {tab !== "folders" ? (
         <Documents type={tab} project={id} embedded />
       ) : (
         <>
-          <div className="filter-bar">
+          <Surface className="filter-bar">
             {hasRole("Manager") && (
               <Button variant="ghost" onClick={() => setTrash((v) => !v)}>
                 {trash ? "Faol papkalar" : "Arxiv"}
@@ -237,7 +229,7 @@ export default function ProjectDetail() {
                   Standart papkalar
                 </Button>
               )}
-          </div>
+          </Surface>
           <Notice
             error={error || folders.error}
             loading={folders.loading}
@@ -274,14 +266,14 @@ export default function ProjectDetail() {
                     </td>
                   )}
                   <td>
-                    <button
+                    <Action
                       className="folder-name"
                       onClick={() => setViewing(folder)}
                     >
                       <span>›</span>
                       <FigmaIcon name="imgFolderIcon" />
                       {folder.title}
-                    </button>
+                    </Action>
                   </td>
                   {folderId && (
                     <td>
@@ -291,7 +283,7 @@ export default function ProjectDetail() {
                   <td>{dateLabel(folder.date)}</td>
                   {!folderId && (
                     <td>
-                      <button
+                      <Action
                         className="file-type-button"
                         onClick={() =>
                           setArchive({
@@ -303,7 +295,7 @@ export default function ProjectDetail() {
                         }
                       >
                         Yuklash
-                      </button>
+                      </Action>
                     </td>
                   )}
                   <td>
@@ -343,7 +335,7 @@ export default function ProjectDetail() {
                   </td>
                   {folderId && (
                     <td>
-                      <button
+                      <Action
                         className="file-type-button"
                         onClick={() =>
                           setArchive({
@@ -355,7 +347,7 @@ export default function ProjectDetail() {
                         }
                       >
                         Yuklash
-                      </button>
+                      </Action>
                     </td>
                   )}
                 </tr>

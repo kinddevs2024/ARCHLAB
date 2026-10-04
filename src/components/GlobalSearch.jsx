@@ -1,3 +1,5 @@
+import { Field } from "./Input";
+import { Action, IconButton } from "./Button";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -116,7 +118,7 @@ export function GlobalSearch() {
     <div className={`global-search ${open ? "search-open" : ""}`} ref={ref}>
       <div className="global-search-field">
         <FaSearch aria-hidden="true" />
-        <input
+        <Field
           ref={input}
           role="combobox"
           aria-label="Umumiy qidiruv"
@@ -138,7 +140,7 @@ export function GlobalSearch() {
           maxLength={120}
         />
         {query && (
-          <button
+          <IconButton
             type="button"
             className="search-clear"
             aria-label="Qidiruvni tozalash"
@@ -148,7 +150,7 @@ export function GlobalSearch() {
             }}
           >
             <FaTimes />
-          </button>
+          </IconButton>
         )}
       </div>
       {open && (
@@ -178,7 +180,7 @@ export function GlobalSearch() {
               {rows.map((row, i) => {
                 const Icon = icons[row.type] || FaFileAlt;
                 return (
-                  <button
+                  <Action
                     key={`${row.type}-${row.id}`}
                     type="button"
                     role="option"
@@ -203,7 +205,7 @@ export function GlobalSearch() {
                         {row.subtitle ? ` · ${row.subtitle}` : ""}
                       </small>
                     </span>
-                  </button>
+                  </Action>
                 );
               })}
             </div>

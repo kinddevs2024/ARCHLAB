@@ -1,8 +1,24 @@
-import { useEffect, useRef, useId, useState } from "react";
-import { createPortal } from "react-dom";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useId,
+  useState,
+} from "react";
+import { Dialog } from "@material-tailwind/react/components/Dialog/index.js";
+import { DialogHeader } from "@material-tailwind/react/components/Dialog/DialogHeader.js";
+import { DialogBody } from "@material-tailwind/react/components/Dialog/DialogBody.js";
+import { animate, createScope } from "animejs";
 import { FaTimes } from "react-icons/fa";
+import { IconButton } from "./Button";
+
 const stack = [];
-let originalOverflow = "";
+const instant = {
+  mount: { opacity: 1, y: 0, transition: { duration: 0 } },
+  unmount: { opacity: 1, y: 0, transition: { duration: 0 } },
+};
+
 export function Modal({
   open,
   title,
@@ -14,115 +30,118 @@ export function Modal({
   const ref = useRef(null),
     close = useRef(onClose),
     canClose = useRef(dismissible),
-    saved = useRef({ title, children }),
-    id = useId(),
+    saved = useRef({ title, children });
+  const id = useId(),
     [present, setPresent] = useState(open),
-    [depth, setDepth] = useState(() => stack.length);
+    [panelNode, setPanelNode] = useState(null);
+  const bindPanel = useCallback((node) => {
+    ref.current = node;
+    setPanelNode(node);
+  }, []);
   close.current = onClose;
   canClose.current = dismissible;
   if (open) saved.current = { title, children };
   useEffect(() => {
-    if (open) {
-      setPresent(true);
+    if (open) setPresent(true);
+  }, [open]);
+  useLayoutEffect(() => {
+    if (!present || !ref.current) return;
+    const panel = ref.current;
+    const backdrop = panel.parentElement,
+      overlay = backdrop.parentElement;
+    const layer =
+      10000 +
+      Math.max(0, stack.indexOf(id) === -1 ? stack.length : stack.indexOf(id)) *
+        10;
+    backdrop.classList.add("modal-backdrop");
+    backdrop.classList.toggle("modal-open", open);
+    backdrop.classList.toggle("modal-closing", !open);
+    backdrop.style.zIndex = String(layer);
+    overlay.style.zIndex = String(layer);
+    panel.setAttribute("aria-labelledby", id);
+    panel.removeAttribute("aria-describedby");
+    panel.setAttribute("aria-modal", "true");
+    panel.removeAttribute("aria-hidden");
+    const scope = createScope({ root: panel });
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!open && reduced) {
+      setPresent(false);
       return;
     }
-    const timer = setTimeout(() => setPresent(false), 180);
-    return () => clearTimeout(timer);
-  }, [open]);
+    if (!reduced)
+      scope.add(() =>
+        animate(panel, {
+          opacity: open ? [0, 1] : [1, 0],
+          y: open ? [10, 0] : [0, 6],
+          scale: open ? [0.985, 1] : [1, 0.99],
+          duration: open ? 220 : 140,
+          ease: "out(3)",
+          onComplete: () => {
+            if (!open) setPresent(false);
+          },
+        }),
+      );
+    return () => scope.revert();
+  }, [open, present, id, panelNode]);
   useEffect(() => {
-    if (!open) return;
-    const previous = document.activeElement;
-    if (!stack.length) {
-      originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-    }
+    if (!present) return;
     stack.push(id);
-    setDepth(stack.length - 1);
-    ref.current?.focus();
     const keys = (e) => {
       if (stack.at(-1) !== id) return;
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && open && canClose.current) {
+        e.preventDefault();
         e.stopPropagation();
-        if (canClose.current) close.current();
-      }
-      if (e.key === "Tab") {
-        const els = [
-          ...ref.current.querySelectorAll(
-            'button,input,select,textarea,a[href],[tabindex="0"]',
-          ),
-        ].filter((x) => !x.disabled && x.getClientRects().length);
-        const first = els[0],
-          last = els.at(-1);
-        if (!els.length) {
-          e.preventDefault();
-          return;
-        }
-        if (
-          e.shiftKey &&
-          (document.activeElement === first ||
-            document.activeElement === ref.current)
-        ) {
-          e.preventDefault();
-          last.focus();
-        } else if (
-          !e.shiftKey &&
-          (document.activeElement === last ||
-            document.activeElement === ref.current)
-        ) {
-          e.preventDefault();
-          first.focus();
-        }
+        close.current();
       }
     };
-    document.addEventListener("keydown", keys);
+    const outside = (e) => {
+      if (
+        open &&
+        canClose.current &&
+        stack.at(-1) === id &&
+        ref.current &&
+        !ref.current.contains(e.target) &&
+        !e.target.closest(".mt-select-menu, .mt-tooltip") &&
+        e.target.closest("[data-floating-ui-portal]")
+      )
+        close.current();
+    };
+    document.addEventListener("keydown", keys, true);
+    document.addEventListener("pointerdown", outside);
     return () => {
-      document.removeEventListener("keydown", keys);
-      const index = stack.indexOf(id);
-      if (index >= 0) stack.splice(index, 1);
-      if (!stack.length) document.body.style.overflow = originalOverflow;
-      if (previous?.isConnected) previous.focus();
+      document.removeEventListener("keydown", keys, true);
+      document.removeEventListener("pointerdown", outside);
+      const i = stack.indexOf(id);
+      if (i >= 0) stack.splice(i, 1);
     };
-  }, [open, id]);
-  if (!open && !present) return null;
+  }, [present, id, open]);
+  if (!present) return null;
   const display = open ? { title, children } : saved.current;
-  return createPortal(
-    <div
-      className={`modal-backdrop ${open ? "modal-open" : "modal-closing"}`}
-      aria-hidden={!open || undefined}
-      style={{ zIndex: 100 + depth * 10 }}
-      onMouseDown={(e) => {
-        if (
-          e.target === e.currentTarget &&
-          open &&
-          canClose.current &&
-          stack.at(-1) === id
-        )
-          close.current();
+  return (
+    <Dialog
+      ref={bindPanel}
+      open={present}
+      handler={() => {
+        if (open && canClose.current && stack.at(-1) === id) close.current();
       }}
+      dismiss={{ enabled: false }}
+      animate={instant}
+      size={size === "wide" ? "lg" : "md"}
+      className={`modal-panel mt-dialog ${size === "wide" ? "modal-wide" : ""}`}
+      onPointerDown={(e) => e.stopPropagation()}
     >
-      <section
-        ref={ref}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={id}
-        tabIndex={-1}
-        className={`modal-panel ${size === "wide" ? "modal-wide" : ""}`}
-      >
-        <header className="modal-heading">
-          <h2 id={id}>{display.title}</h2>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Yopish"
-            disabled={!dismissible}
-            onClick={onClose}
-          >
-            <FaTimes />
-          </button>
-        </header>
-        <div className="modal-body">{display.children}</div>
-      </section>
-    </div>,
-    document.body,
+      <DialogHeader className="modal-heading">
+        <h2 id={id}>{display.title}</h2>
+        <IconButton
+          className="icon-button"
+          aria-label="Yopish"
+          disabled={!dismissible}
+          onClick={onClose}
+        >
+          <FaTimes />
+        </IconButton>
+      </DialogHeader>
+      <DialogBody className="modal-body">{display.children}</DialogBody>
+    </Dialog>
   );
 }

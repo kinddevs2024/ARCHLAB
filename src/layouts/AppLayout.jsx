@@ -1,3 +1,10 @@
+import {
+  Surface,
+  NavigationBar,
+  NavigationList,
+  Loading,
+} from "../components/DesignSystem";
+import { Action, IconButton } from "../components/Button";
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaMoon, FaSun } from "react-icons/fa";
@@ -99,12 +106,7 @@ export function AppLayout() {
     window.addEventListener("notifications:changed", refresh);
     return () => window.removeEventListener("notifications:changed", refresh);
   }, [user, location.pathname]);
-  if (loading)
-    return (
-      <p className="loading-state" role="status">
-        Yuklanmoqda...
-      </p>
-    );
+  if (loading) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
   const toggle = () => {
     if (innerWidth < 1024) setMobileOpen((v) => !v);
@@ -116,18 +118,18 @@ export function AppLayout() {
         className={`workspace ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}
       >
         {mobileOpen && (
-          <button
+          <Action
             className="mobile-overlay"
             aria-label="Menyuni yopish"
             onClick={() => setMobileOpen(false)}
           />
         )}
-        <aside className="workspace-sidebar">
+        <Surface role="complementary" className="workspace-sidebar">
           <Link className="workspace-logo" to="/projects">
             <img src={assets.projects.imgImage7} alt="ARCH LAB" />
             <span>ARCH LAB</span>
           </Link>
-          <nav className="workspace-nav" aria-label="Asosiy menyu">
+          <NavigationList className="workspace-nav" aria-label="Asosiy menyu">
             {items
               .filter((i) => !i[3] || hasRole(i[3]))
               .map(([to, label, icon]) => (
@@ -178,29 +180,29 @@ export function AppLayout() {
                   <span className="nav-label">{label}</span>
                 </Link>
               ))}
-          </nav>
-          <button
+          </NavigationList>
+          <Action
             className="workspace-logout"
             aria-label="Chiqish"
             onClick={logout}
           >
             <FigmaIcon name="imgLogout" />
             <span className="nav-label">Chiqish</span>
-          </button>
-        </aside>
+          </Action>
+        </Surface>
         <main className="workspace-main">
-          <header className="workspace-header">
-            <button
+          <NavigationBar className="workspace-header">
+            <IconButton
               className="icon-button"
               aria-label="Menyuni ochish yoki yig'ish"
               aria-expanded={mobileOpen || !collapsed}
               onClick={toggle}
             >
               <FigmaIcon name="imgFrame461" />
-            </button>
+            </IconButton>
             <GlobalSearch />
             <div className="header-controls">
-              <button
+              <IconButton
                 type="button"
                 className="icon-button theme-toggle"
                 disabled={themeBusy}
@@ -219,7 +221,7 @@ export function AppLayout() {
               >
                 <FaSun className="theme-sun" />
                 <FaMoon className="theme-moon" />
-              </button>
+              </IconButton>
               <Link
                 to="/notifications"
                 className="icon-button relative"
@@ -244,16 +246,16 @@ export function AppLayout() {
                 <AuthImage src={user.avatar} alt="Profil" />
               </Link>
             </div>
-          </header>
+          </NavigationBar>
           {themeError && (
             <div role="alert" className="theme-error">
               {themeError}
-              <button
+              <Action
                 onClick={() => setThemeError("")}
                 aria-label="Xabarni yopish"
               >
                 ×
-              </button>
+              </Action>
             </div>
           )}
           <div

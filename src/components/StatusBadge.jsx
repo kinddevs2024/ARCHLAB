@@ -1,3 +1,4 @@
+import { Badge } from "./DesignSystem";
 const labels = {
   new: "Yangi",
   in_progress: "Jarayonda",
@@ -9,8 +10,8 @@ const labels = {
 };
 export function StatusBadge({ value }) {
   return (
-    <span className={`status-badge status-${value}`}>
+    <Badge className={`status-badge status-${value}`}>
       {labels[value] || value}
-    </span>
+    </Badge>
   );
 }

@@ -1,3 +1,4 @@
+import { Surface } from "./DesignSystem";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 export function GitHubStorageCard() {
@@ -26,7 +27,7 @@ export function GitHubStorageCard() {
   }, []);
   if (!data?.enabled && !error) return null;
   return (
-    <section className="settings-card form-grid">
+    <Surface className="settings-card form-grid">
       <h2>Hujjatlar zaxirasi</h2>
       {error ? (
         <p role="status">Zaxira holatini hozir tekshirib bo'lmadi.</p>
@@ -69,6 +70,6 @@ export function GitHubStorageCard() {
           </small>
         </>
       )}
-    </section>
+    </Surface>
   );
 }

@@ -10,6 +10,8 @@
 @import "@fontsource/poppins/400.css";
 @import "tailwindcss";
 @config "../tailwind.config.js";
+@source "../node_modules/@material-tailwind/react/components";
+@source "../node_modules/@material-tailwind/react/theme/components";
 @custom-variant dark (&:where(.dark,.dark *));
 :root {
   --app-bg: #f6f8fd;

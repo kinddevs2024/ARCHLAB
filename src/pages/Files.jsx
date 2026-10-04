@@ -1,3 +1,6 @@
+import { Surface, Title } from "../components/DesignSystem";
+import { Field } from "../components/Input";
+import { Action } from "../components/Button";
 import { FileBackupStatus } from "../components/FileBackupStatus";
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
@@ -65,7 +68,7 @@ export default function Files() {
   return (
     <div>
       <div className="page-heading">
-        <h1>Loyiha fayllari</h1>
+        <Title>Loyiha fayllari</Title>
         <Button variant="secondary" onClick={() => setTrash((v) => !v)}>
           {trash ? "Faol fayllar" : "Arxiv"}
         </Button>
@@ -73,14 +76,14 @@ export default function Files() {
       <p className="mb-5 text-gray-500">
         Fayl yuklash uchun loyiha yoki hujjatning fayllar bo'limini oching.
       </p>
-      <div className="filter-bar">
-        <input
+      <Surface className="filter-bar">
+        <Field
           placeholder="Fayl nomi"
           aria-label="Fayl qidirish"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </div>
+      </Surface>
       <Notice error={error || c.error} loading={c.loading} onRetry={c.reload} />
       {!c.loading && (
         <Table
@@ -92,9 +95,9 @@ export default function Files() {
               className={f.id === params.get("file") ? "selected" : ""}
             >
               <td>
-                <button className="record-link" onClick={() => setViewing(f)}>
+                <Action className="record-link" onClick={() => setViewing(f)}>
                   {f.originalName}
-                </button>
+                </Action>
                 <FileBackupStatus file={f} />
                 {f.project && (
                   <Link
@@ -110,14 +113,14 @@ export default function Files() {
               <td>{dateLabel(f.createdAt)}</td>
               <td>
                 {!trash && (
-                  <button
+                  <Action
                     className="file-type-button"
                     onClick={() =>
                       downloadFile(f).catch((e) => setError(apiMessage(e)))
                     }
                   >
                     Yuklab olish
-                  </button>
+                  </Action>
                 )}
               </td>
               <td>

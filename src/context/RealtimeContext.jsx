@@ -1,3 +1,4 @@
+import { Action } from "../components/Button";
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
@@ -293,9 +294,9 @@ export function RealtimeProvider({ user, children }) {
       {error && (
         <div role="alert" className="call-error">
           {error}
-          <button aria-label="Xabarni yopish" onClick={() => setError("")}>
+          <Action aria-label="Xabarni yopish" onClick={() => setError("")}>
             ×
-          </button>
+          </Action>
         </div>
       )}
       <Modal

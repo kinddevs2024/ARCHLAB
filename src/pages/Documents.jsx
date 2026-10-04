@@ -1,3 +1,6 @@
+import { Surface, Title } from "../components/DesignSystem";
+import { Field } from "../components/Input";
+import { Action } from "../components/Button";
 import { projectOptions } from "../api/options";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -180,14 +183,14 @@ export default function Documents({ type, project, embedded = false }) {
   const fileButtons = (item) => (
     <div className="file-type-pair">
       {["pdf", "doc"].map((extension) => (
-        <button
+        <Action
           key={extension}
           className={`file-type-button ${counts[item.id]?.extensions?.[extension] ? "uploaded" : ""}`}
           onClick={() => setArchive({ ...item, extension })}
         >
           {counts[item.id]?.extensions?.[extension] ? "Yuklandi" : "Yuklash"}
           <small>{extension.toUpperCase()}</small>
-        </button>
+        </Action>
       ))}
     </div>
   );
@@ -236,7 +239,7 @@ export default function Documents({ type, project, embedded = false }) {
       ) : (
         <>
           <div className="page-heading">
-            {!embedded && <h1>{conf.title}</h1>}
+            {!embedded && <Title>{conf.title}</Title>}
             <div className="heading-actions">
               {!embedded && <YearFilter value={year} onChange={setYear} />}
               <Button
@@ -253,8 +256,8 @@ export default function Documents({ type, project, embedded = false }) {
               {canWrite && !trash && <Button onClick={create}>Yangi</Button>}
             </div>
           </div>
-          <div className="filter-bar">
-            <input
+          <Surface className="filter-bar">
+            <Field
               aria-label={`${conf.title} qidirish`}
               placeholder="Qidirish"
               value={search}
@@ -265,7 +268,7 @@ export default function Documents({ type, project, embedded = false }) {
                 {trash ? "Faol yozuvlar" : "Arxiv"}
               </Button>
             )}
-          </div>
+          </Surface>
           <Notice
             error={collection.error || (!open ? error : "")}
             loading={collection.loading}
@@ -285,12 +288,12 @@ export default function Documents({ type, project, embedded = false }) {
                     {dateLabel(item[conf.date] || item.createdAt)}
                   </td>
                   <td>
-                    <button
+                    <Action
                       className="record-link"
                       onClick={() => setFocused(item)}
                     >
                       {item.title}
-                    </button>
+                    </Action>
                   </td>
                   {type !== "expenses" && (
                     <>

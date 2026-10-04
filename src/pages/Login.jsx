@@ -1,3 +1,7 @@
+import { Feedback, Loading } from "../components/DesignSystem";
+import { Title } from "../components/DesignSystem";
+import { Field, Checkbox } from "../components/Input";
+import { Action } from "../components/Button";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -10,7 +14,7 @@ export default function Login() {
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [visible, setVisible] = useState(false);
-  if (authLoading) return <p className="loading-state">Yuklanmoqda...</p>;
+  if (authLoading) return <Loading />;
   if (user) return <Navigate to="/projects" replace />;
   const submit = async (e) => {
     e.preventDefault();
@@ -33,20 +37,16 @@ export default function Login() {
           >
             <img src={assets.login.imgImage8} alt="ARCH LAB" />
           </span>
-          <h1>ARCH LAB WOORKROOM</h1>
+          <Title>ARCH LAB WOORKROOM</Title>
         </header>
         <form className="login-form" onSubmit={submit}>
           <h2>Xush kelibsiz</h2>
-          {message && (
-            <p role="alert" className="notice-error">
-              {message}
-            </p>
-          )}
+          {message && <Feedback>{message}</Feedback>}
           <label className="login-field">
             <span>
               <FigmaIcon screen="login" name="imgMessage" />
             </span>
-            <input
+            <Field
               aria-label="Email"
               placeholder="Email"
               type="email"
@@ -60,7 +60,7 @@ export default function Login() {
             <span>
               <FigmaIcon screen="login" name="imgLock" />
             </span>
-            <input
+            <Field
               aria-label="Password"
               placeholder="Password"
               type={visible ? "text" : "password"}
@@ -69,25 +69,23 @@ export default function Login() {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
-            <button
+            <Action
               type="button"
               aria-label={visible ? "Parolni yashirish" : "Parolni ko'rsatish"}
               onClick={() => setVisible((v) => !v)}
             >
               {visible ? <FaEyeSlash /> : <FaEye />}
-            </button>
+            </Action>
           </label>
-          <label className="login-remember">
-            <input
-              type="checkbox"
-              checked={form.remember}
-              onChange={(e) => setForm({ ...form, remember: e.target.checked })}
-            />
-            Eslab qolish
-          </label>
-          <button className="login-submit" disabled={busy}>
+          <Checkbox
+            wrapperClassName="login-remember"
+            checked={form.remember}
+            onChange={(e) => setForm({ ...form, remember: e.target.checked })}
+            label={<>Eslab qolish</>}
+          />
+          <Action type="submit" className="login-submit" disabled={busy}>
             {busy ? "Yuklanmoqda..." : "Kirish"}
-          </button>
+          </Action>
         </form>
         <div className="login-skyline">
           <img src={assets.login.imgGroup} alt="" />

@@ -1,3 +1,10 @@
+import {
+  Surface,
+  Title,
+  PanelForm,
+  Feedback,
+} from "../components/DesignSystem";
+import { IconButton } from "../components/Button";
 import { GitHubStorageCard } from "../components/GitHubStorageCard";
 import { useEffect, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
@@ -86,25 +93,25 @@ export default function Settings() {
   return (
     <div>
       <div className="page-heading">
-        <h1>Sozlamalar</h1>
+        <Title>Sozlamalar</Title>
       </div>
       <Notice error={error} />
       {message && (
-        <p role="status" className="notice-success">
+        <Feedback kind="success" role="status" className="notice-success">
           {message}
-        </p>
+        </Feedback>
       )}
       <div className="settings-grid">
-        <form className="settings-card form-grid" onSubmit={submitProfile}>
+        <PanelForm className="settings-card form-grid" onSubmit={submitProfile}>
           <h2>Profil</h2>
-          <div className="flex items-center gap-5">
-            <div className="relative">
+          <div className="settings-profile-summary flex items-center gap-5">
+            <div className="settings-avatar relative">
               <AuthImage
                 src={user.avatar}
                 alt="Profil rasmi"
                 className="h-24 w-24 rounded-full object-cover bg-gray-200"
               />
-              <button
+              <IconButton
                 type="button"
                 className="avatar-camera"
                 aria-label="Profil rasmini tanlash"
@@ -112,7 +119,7 @@ export default function Settings() {
                 onClick={() => avatar.current.click()}
               >
                 <FigmaIcon screen="employee-form" name="imgGroup4" />
-              </button>
+              </IconButton>
               <input
                 ref={avatar}
                 hidden
@@ -172,9 +179,12 @@ export default function Settings() {
           <Button disabled={!!busy} type="submit">
             {busy === "profile" ? "Saqlanmoqda..." : "Profilni saqlash"}
           </Button>
-        </form>
+        </PanelForm>
         <div className="form-grid">
-          <form className="settings-card form-grid" onSubmit={submitPassword}>
+          <PanelForm
+            className="settings-card form-grid"
+            onSubmit={submitPassword}
+          >
             <h2>Parolni almashtirish</h2>
             <Input
               label="Hozirgi parol"
@@ -202,8 +212,8 @@ export default function Settings() {
             <Button type="submit" disabled={!!busy}>
               Parolni almashtirish
             </Button>
-          </form>
-          <section className="settings-card form-grid">
+          </PanelForm>
+          <Surface className="settings-card form-grid">
             <h2>Shaxsiy sozlamalar</h2>
             <Select
               label="Tema"
@@ -215,10 +225,10 @@ export default function Settings() {
               <option value="dark">Qorong'i</option>
               <option value="system">Tizim sozlamasi</option>
             </Select>
-          </section>
+          </Surface>
           {hasRole("Admin") && <GitHubStorageCard />}
           {hasRole("Admin") && (
-            <form
+            <PanelForm
               className="settings-card form-grid"
               onSubmit={(e) => {
                 e.preventDefault();
@@ -240,7 +250,7 @@ export default function Settings() {
               <Button type="submit" disabled={!!busy}>
                 Saqlash
               </Button>
-            </form>
+            </PanelForm>
           )}
         </div>
       </div>

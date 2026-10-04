@@ -1,3 +1,4 @@
+import { Surface } from "./DesignSystem";
 export function Table({
   columns,
   rows,
@@ -5,7 +6,7 @@ export function Table({
   empty = "Ma'lumot topilmadi",
 }) {
   return (
-    <div
+    <Surface
       className="table-scroll"
       role="region"
       aria-label="Ma’lumotlar jadvali"
@@ -36,6 +37,6 @@ export function Table({
           )}
         </tbody>
       </table>
-    </div>
+    </Surface>
   );
 }

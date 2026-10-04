@@ -1,3 +1,6 @@
+import { Surface, Title } from "../components/DesignSystem";
+import { Field, Checkbox } from "../components/Input";
+import { Action, IconButton } from "../components/Button";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { api, apiMessage } from "../api/client";
@@ -231,9 +234,10 @@ export default function Chat() {
   };
   return (
     <div className={`chat-workspace ${activeId ? "chat-active" : ""}`}>
+      <Title className="sr-only">Chat</Title>
       <aside className="chat-sidebar">
         <div className="chat-search">
-          <input
+          <Field
             aria-label="Suhbat qidirish"
             placeholder="Search Name"
             value={search}
@@ -242,7 +246,7 @@ export default function Chat() {
           <FigmaIcon screen="chat" name="imgSearchNormal" />
         </div>
         <div className="chat-create">
-          <button onClick={newChat}>+ Yangi chat</button>
+          <Action onClick={newChat}>+ Yangi chat</Action>
           <span className={connected ? "text-green-600" : "text-gray-400"}>
             {connected ? "Ulangan" : "Aloqa tiklanmoqda"}
           </span>
@@ -258,7 +262,7 @@ export default function Chat() {
             .map((c) => {
               const other = c.participants.find((p) => idOf(p) !== user.id);
               return (
-                <button
+                <Action
                   key={c.id}
                   className={`chat-person ${activeId === c.id ? "selected" : ""}`}
                   onClick={() => {
@@ -283,7 +287,7 @@ export default function Chat() {
                       )}
                     </span>
                   </span>
-                </button>
+                </Action>
               );
             })}
           {!loading && !conversations.length && (
@@ -297,13 +301,13 @@ export default function Chat() {
         {active ? (
           <>
             <header className="chat-heading">
-              <button
+              <IconButton
                 className="chat-back icon-button"
                 aria-label="Suhbatlar"
                 onClick={() => setActiveId(null)}
               >
                 <FaArrowLeft />
-              </button>
+              </IconButton>
               <AuthImage src={peer?.avatar} alt="" />
               <div>
                 <strong>{active.title}</strong>
@@ -317,7 +321,7 @@ export default function Chat() {
                 </small>
               </div>
               <div className="chat-call-actions">
-                <button
+                <IconButton
                   className="icon-button"
                   disabled={!connected || !peer}
                   aria-label="Audio qo'ng'iroq"
@@ -326,8 +330,8 @@ export default function Chat() {
                   }
                 >
                   <FigmaIcon screen="chat" name="imgVuesaxLinearCall" />
-                </button>
-                <button
+                </IconButton>
+                <IconButton
                   className="icon-button"
                   disabled={!connected || !peer}
                   aria-label="Video qo'ng'iroq"
@@ -336,7 +340,7 @@ export default function Chat() {
                   }
                 >
                   <FigmaIcon screen="chat" name="imgVuesaxLinearVideo" />
-                </button>
+                </IconButton>
               </div>
             </header>
             <div
@@ -368,13 +372,13 @@ export default function Chat() {
                     key={m.id}
                     className={`message ${mine ? "mine" : ""}`}
                   >
-                    <div className="message-bubble">
+                    <Surface className="message-bubble">
                       {active.participants.length > 2 && !mine && (
                         <strong className="block mb-2">{name(m.sender)}</strong>
                       )}
                       {m.text && <p>{m.text}</p>}
                       {m.attachments?.map((f) => (
-                        <button
+                        <Action
                           key={f.id}
                           className="chat-attachment"
                           onClick={() =>
@@ -396,7 +400,7 @@ export default function Chat() {
                           <small>
                             {(f.size / 1024).toFixed(0)} KB · Yuklab olish
                           </small>
-                        </button>
+                        </Action>
                       ))}
                       <footer>
                         <time>{timeLabel(m.createdAt)}</time>
@@ -409,12 +413,12 @@ export default function Chat() {
                           </span>
                         )}
                       </footer>
-                    </div>
+                    </Surface>
                   </article>
                 );
               })}
               {!loadingMessages && !messages.length && (
-                <p className="loading-state">Hali xabar yo'q</p>
+                <p className="chat-message-empty">Hali xabar yo'q</p>
               )}
             </div>
             <Notice error={error} />
@@ -423,7 +427,7 @@ export default function Chat() {
                 {files.map((f) => (
                   <span key={f.id}>
                     {f.originalName}
-                    <button
+                    <Action
                       aria-label={`${f.originalName} ni olib tashlash`}
                       onClick={async () => {
                         try {
@@ -435,13 +439,13 @@ export default function Chat() {
                       }}
                     >
                       ×
-                    </button>
+                    </Action>
                   </span>
                 ))}
               </div>
             )}
             <form className="chat-composer" onSubmit={send}>
-              <button
+              <IconButton
                 type="button"
                 className="icon-button"
                 disabled={busy}
@@ -449,7 +453,7 @@ export default function Chat() {
                 onClick={() => fileRef.current.click()}
               >
                 <FigmaIcon screen="chat" name="imgVuesaxLinearAttachCircle" />
-              </button>
+              </IconButton>
               <input
                 ref={fileRef}
                 type="file"
@@ -458,25 +462,26 @@ export default function Chat() {
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.zip,.dwg,.dxf"
                 onChange={attach}
               />
-              <input
+              <Field
                 aria-label="Xabar matni"
                 placeholder="Send your message..."
                 value={text}
                 maxLength={5000}
                 onChange={(e) => setText(e.target.value)}
               />
-              <button
+              <IconButton
+                type="submit"
                 className="chat-send"
                 aria-label="Xabar yuborish"
                 disabled={busy || (!text.trim() && !files.length)}
               >
                 <FigmaIcon screen="chat" name="imgVuesaxBoldSend2" />
-              </button>
+              </IconButton>
             </form>
           </>
         ) : (
           <div className="chat-empty">
-            <h1>Chat</h1>
+            <p className="chat-empty-title">Chat</p>
             <p>Suhbatni tanlang yoki yangi chat oching.</p>
             <Notice error={error} />
           </div>
@@ -494,25 +499,30 @@ export default function Chat() {
           <p>Xodimlarni tanlang</p>
           <div className="participant-list">
             {people.map((p) => (
-              <label key={p.id}>
-                <input
-                  type="checkbox"
-                  checked={selected.includes(p.id)}
-                  onChange={(e) =>
-                    setSelected((ids) =>
-                      e.target.checked
-                        ? [...ids, p.id]
-                        : ids.filter((id) => id !== p.id),
-                    )
-                  }
-                />
-                <AuthImage src={p.avatar} alt="" />
-                {name(p)}
-                <small>{p.position}</small>
-              </label>
+              <Checkbox
+                key={p.id}
+                checked={selected.includes(p.id)}
+                onChange={(e) =>
+                  setSelected((ids) =>
+                    e.target.checked
+                      ? [...ids, p.id]
+                      : ids.filter((id) => id !== p.id),
+                  )
+                }
+                label={
+                  <>
+                    <AuthImage src={p.avatar} alt="" />
+                    {name(p)}
+                    <small>{p.position}</small>
+                  </>
+                }
+              />
             ))}
           </div>
-          <Button disabled={busy || !selected.length || selected.length > 20}>
+          <Button
+            type="submit"
+            disabled={busy || !selected.length || selected.length > 20}
+          >
             Chat ochish
           </Button>
         </form>

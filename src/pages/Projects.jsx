@@ -1,3 +1,6 @@
+import { Surface, Title } from "../components/DesignSystem";
+import { Field } from "../components/Input";
+import { Action } from "../components/Button";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, apiMessage } from "../api/client";
@@ -153,7 +156,7 @@ export default function Projects({ title = "Loyihalar", category }) {
   return (
     <div>
       <div className="page-heading">
-        <h1>{title}</h1>
+        <Title>{title}</Title>
         <div className="heading-actions">
           <YearFilter value={year} onChange={setYear} />
           {hasRole("Admin") && !trash && (
@@ -161,8 +164,8 @@ export default function Projects({ title = "Loyihalar", category }) {
           )}
         </div>
       </div>
-      <div className="filter-bar">
-        <input
+      <Surface className="filter-bar">
+        <Field
           placeholder="Loyiha yoki mijozni qidirish"
           aria-label="Loyihalarni qidirish"
           value={search}
@@ -173,7 +176,7 @@ export default function Projects({ title = "Loyihalar", category }) {
             {trash ? "Faol loyihalar" : "Arxiv"}
           </Button>
         )}
-      </div>
+      </Surface>
       <Notice
         error={collection.error || (!open ? error : "")}
         loading={collection.loading}
@@ -198,26 +201,26 @@ export default function Projects({ title = "Loyihalar", category }) {
                 <StatusBadge value={item.status} />
               </td>
               <td>
-                <button
+                <Action
                   className="folder-name"
                   onClick={() => setViewing(item)}
                   disabled={trash}
                 >
                   <FigmaIcon name="imgFolderIcon" />
                   {item.company || item.title}
-                </button>
+                </Action>
               </td>
               <td>{item.objectName || item.title}</td>
               <td>{item.objectAddress || "—"}</td>
               <td className="whitespace-nowrap">{dateLabel(item.date)}</td>
               <td>
                 {!trash && (
-                  <button
+                  <Action
                     className="file-type-button"
                     onClick={() => setArchive(item)}
                   >
                     Yuklash
-                  </button>
+                  </Action>
                 )}
               </td>
               <td>

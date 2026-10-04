@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    // Material Tailwind 2 carries React 18.2; every component must share the app renderer.
+    resolve: { dedupe: ["react", "react-dom"] },
     build: { outDir: "dist/client", emptyOutDir: true },
     server: {
       host: "0.0.0.0",

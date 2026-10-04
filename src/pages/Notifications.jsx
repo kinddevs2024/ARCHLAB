@@ -1,3 +1,5 @@
+import { Feedback, Loading } from "../components/DesignSystem";
+import { Surface, Title } from "../components/DesignSystem";
 import { Link } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { api, apiMessage } from "../api/client";
@@ -42,22 +44,19 @@ export default function Notifications() {
   return (
     <div>
       <div className="page-heading">
-        <h1 className="text-[32px] font-semibold">Bildirishnomalar</h1>
+        <Title className="text-[32px] font-semibold">Bildirishnomalar</Title>
         <Button onClick={() => markRead()} disabled={loading}>
           Barchasini o'qilgan deb belgilash
         </Button>
       </div>
-      {error && (
-        <p role="alert" className="mb-4 rounded-lg bg-red-50 p-4 text-red-700">
-          {error}
-        </p>
-      )}
+      {error && <Feedback>{error}</Feedback>}
       {loading ? (
-        <p>Yuklanmoqda...</p>
+        <Loading />
       ) : items.length ? (
         <div className="space-y-3">
           {items.map((item) => (
-            <article
+            <Surface
+              role="article"
               key={item.id}
               className="rounded-xl bg-white p-5 shadow-sm dark:bg-[#20262d]"
             >
@@ -91,7 +90,7 @@ export default function Notifications() {
                   </Button>
                 )}
               </div>
-            </article>
+            </Surface>
           ))}
         </div>
       ) : (

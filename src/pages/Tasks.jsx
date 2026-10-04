@@ -1,3 +1,6 @@
+import { Surface, Title } from "../components/DesignSystem";
+import { Field } from "../components/Input";
+import { Action } from "../components/Button";
 import { projectOptions } from "../api/options";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -133,7 +136,7 @@ export default function Tasks() {
     <div>
       <div className="page-heading">
         <div>
-          <h1>Vazifalar</h1>
+          <Title>Vazifalar</Title>
           <p className="mt-3 text-gray-500">
             Sizning ish joyingizdagi vazifalar.
           </p>
@@ -142,14 +145,14 @@ export default function Tasks() {
           <Button onClick={() => edit(null)}>Vazifa yaratish</Button>
         )}
       </div>
-      <div className="filter-bar">
-        <input
+      <Surface className="filter-bar">
+        <Field
           aria-label="Vazifa qidirish"
           placeholder="Qidirish"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select
+        <Select
           aria-label="Vazifa holati"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
@@ -158,20 +161,20 @@ export default function Tasks() {
           <option value="todo">Yangi</option>
           <option value="in_progress">Jarayonda</option>
           <option value="done">Tayyorlandi</option>
-        </select>
+        </Select>
         {hasRole("Manager") && (
           <Button variant="ghost" onClick={() => setTrash((v) => !v)}>
             {trash ? "Faol vazifalar" : "Arxiv"}
           </Button>
         )}
-      </div>
+      </Surface>
       <Notice
         error={!open ? error || c.error : c.error}
         loading={c.loading}
         onRetry={c.reload}
       />
       {!c.loading && !c.rows.length && !c.error ? (
-        <div className="empty-state">
+        <Surface className="empty-state">
           <img
             src={assets["task-form"].imgGroup43}
             alt=""
@@ -185,7 +188,7 @@ export default function Tasks() {
           {hasRole("Manager") && (
             <Button onClick={() => edit(null)}>Vazifa yaratish</Button>
           )}
-        </div>
+        </Surface>
       ) : (
         !c.loading && (
           <Table
@@ -202,12 +205,12 @@ export default function Tasks() {
             renderRow={(item) => (
               <tr key={item.id} className="data-row">
                 <td>
-                  <button
+                  <Action
                     className="record-link"
                     onClick={() => setViewing(item)}
                   >
                     {item.title}
-                  </button>
+                  </Action>
                 </td>
                 <td>{item.project?.title || "—"}</td>
                 <td>{item.assignee?.name || "—"}</td>
